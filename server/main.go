@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"time"
 
+	"habit-tracker/server/db"
+
 	"github.com/google/uuid"
 )
 
@@ -20,7 +22,7 @@ import (
 		GET /habits/:id/tracking
 */
 
-var db Database
+var database db.Database
 
 func checkParams(w http.ResponseWriter, params map[string]string, requiredParams []string) bool {
 	for _, param := range requiredParams {
@@ -34,7 +36,7 @@ func checkParams(w http.ResponseWriter, params map[string]string, requiredParams
 }
 
 func getHabits(w http.ResponseWriter, r *http.Request, params map[string]string) {
-	habits, err := db.GetAllHabits()
+	habits, err := database.GetAllHabits()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Failed to retrieve habits"))
@@ -47,7 +49,7 @@ func getHabits(w http.ResponseWriter, r *http.Request, params map[string]string)
 }
 
 func createHabit(w http.ResponseWriter, r *http.Request, params map[string]string) {
-	var habit Habit
+	var habit db.Habit
 	if err := json.NewDecoder(r.Body).Decode(&habit); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte("Invalid JSON"))
@@ -58,8 +60,8 @@ func createHabit(w http.ResponseWriter, r *http.Request, params map[string]strin
 		habit.ID = uuid.New().String()
 	}
 
-	if err := db.CreateHabit(&habit); err != nil {
-		if err == ErrDuplicate {
+	if err := database.CreateHabit(&habit); err != nil {
+		if err == db.ErrDuplicate {
 			w.WriteHeader(http.StatusConflict)
 			w.Write([]byte("Habit already exists"))
 		} else {
@@ -79,9 +81,9 @@ func getHabit(w http.ResponseWriter, r *http.Request, params map[string]string) 
 		return
 	}
 
-	habit, err := db.GetHabit(params["id"])
+	habit, err := database.GetHabit(params["id"])
 	if err != nil {
-		if err == ErrNotFound {
+		if err == db.ErrNotFound {
 			w.WriteHeader(http.StatusNotFound)
 			w.Write([]byte("Habit not found"))
 		} else {
@@ -101,7 +103,7 @@ func updateHabit(w http.ResponseWriter, r *http.Request, params map[string]strin
 		return
 	}
 
-	var habit Habit
+	var habit db.Habit
 	if err := json.NewDecoder(r.Body).Decode(&habit); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte("Invalid JSON"))
@@ -110,8 +112,8 @@ func updateHabit(w http.ResponseWriter, r *http.Request, params map[string]strin
 
 	habit.ID = params["id"]
 
-	if err := db.UpdateHabit(&habit); err != nil {
-		if err == ErrNotFound {
+	if err := database.UpdateHabit(&habit); err != nil {
+		if err == db.ErrNotFound {
 			w.WriteHeader(http.StatusNotFound)
 			w.Write([]byte("Habit not found"))
 		} else {
@@ -131,8 +133,8 @@ func deleteHabit(w http.ResponseWriter, r *http.Request, params map[string]strin
 		return
 	}
 
-	if err := db.DeleteHabit(params["id"]); err != nil {
-		if err == ErrNotFound {
+	if err := database.DeleteHabit(params["id"]); err != nil {
+		if err == db.ErrNotFound {
 			w.WriteHeader(http.StatusNotFound)
 			w.Write([]byte("Habit not found"))
 		} else {
@@ -150,7 +152,7 @@ func createTracking(w http.ResponseWriter, r *http.Request, params map[string]st
 		return
 	}
 
-	var entry TrackingEntry
+	var entry db.TrackingEntry
 	if err := json.NewDecoder(r.Body).Decode(&entry); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte("Invalid JSON"))
@@ -167,8 +169,8 @@ func createTracking(w http.ResponseWriter, r *http.Request, params map[string]st
 		entry.Timestamp = time.Now().Format(time.RFC3339)
 	}
 
-	if err := db.CreateTrackingEntry(&entry); err != nil {
-		if err == ErrDuplicate {
+	if err := database.CreateTrackingEntry(&entry); err != nil {
+		if err == db.ErrDuplicate {
 			w.WriteHeader(http.StatusConflict)
 			w.Write([]byte("Tracking entry already exists"))
 		} else {
@@ -188,7 +190,7 @@ func getTracking(w http.ResponseWriter, r *http.Request, params map[string]strin
 		return
 	}
 
-	entries, err := db.GetTrackingEntriesByHabitID(params["id"])
+	entries, err := database.GetTrackingEntriesByHabitID(params["id"])
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Failed to retrieve tracking entries"))
@@ -201,7 +203,18 @@ func getTracking(w http.ResponseWriter, r *http.Request, params map[string]strin
 }
 
 func main() {
-	db = NewMapDatabase()
+	// Initialize database from configuration
+	var err error
+	database, err = db.NewDatabaseFromConfig()
+	if err != nil {
+		log.Fatalf("Failed to initialize database: %v", err)
+	}
+
+	// Check database connection health
+	if err := database.Ping(); err != nil {
+		log.Fatalf("Database connection failed: %v", err)
+	}
+	log.Println("Database connection successful")
 
 	router := CreateRouter()
 
