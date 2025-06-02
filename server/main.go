@@ -42,9 +42,8 @@ func getHabits(w http.ResponseWriter, r *http.Request, params map[string]string)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(habits)
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Habits fetched successfully"))
+	json.NewEncoder(w).Encode(habits)
 }
 
 func createHabit(w http.ResponseWriter, r *http.Request, params map[string]string) {
@@ -71,9 +70,8 @@ func createHabit(w http.ResponseWriter, r *http.Request, params map[string]strin
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(habit)
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte("Habit created successfully"))
+	json.NewEncoder(w).Encode(habit)
 }
 
 func getHabit(w http.ResponseWriter, r *http.Request, params map[string]string) {
@@ -94,9 +92,8 @@ func getHabit(w http.ResponseWriter, r *http.Request, params map[string]string) 
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(habit)
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Habit fetched successfully"))
+	json.NewEncoder(w).Encode(habit)
 }
 
 func updateHabit(w http.ResponseWriter, r *http.Request, params map[string]string) {
@@ -125,9 +122,8 @@ func updateHabit(w http.ResponseWriter, r *http.Request, params map[string]strin
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(habit)
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Habit updated successfully"))
+	json.NewEncoder(w).Encode(habit)
 }
 
 func deleteHabit(w http.ResponseWriter, r *http.Request, params map[string]string) {
@@ -147,7 +143,6 @@ func deleteHabit(w http.ResponseWriter, r *http.Request, params map[string]strin
 	}
 
 	w.WriteHeader(http.StatusNoContent)
-	w.Write([]byte("Habit deleted successfully"))
 }
 
 func createTracking(w http.ResponseWriter, r *http.Request, params map[string]string) {
@@ -186,7 +181,6 @@ func createTracking(w http.ResponseWriter, r *http.Request, params map[string]st
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(entry)
-	w.Write([]byte("Tracking entry created successfully"))
 }
 
 func getTracking(w http.ResponseWriter, r *http.Request, params map[string]string) {
@@ -202,9 +196,8 @@ func getTracking(w http.ResponseWriter, r *http.Request, params map[string]strin
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(entries)
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Tracking entries fetched successfully"))
+	json.NewEncoder(w).Encode(entries)
 }
 
 func main() {

@@ -28,7 +28,24 @@ func (r *Router) Handle(method, pattern string, handler HandlerFunc) {
 	r.routes = append(r.routes, route{method: method, pattern: pattern, handler: handler})
 }
 
+// addCORSHeaders adds the necessary CORS headers to the response
+func addCORSHeaders(w http.ResponseWriter) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+	w.Header().Set("Access-Control-Max-Age", "86400")
+}
+
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	// Add CORS headers to all responses
+	addCORSHeaders(w)
+
+	// Handle preflight OPTIONS requests
+	if req.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
 	for _, route := range r.routes {
 
 		if req.Method != route.method {
