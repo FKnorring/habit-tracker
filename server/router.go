@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"net/http"
 	"strings"
 )
@@ -39,6 +40,8 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		if !matched {
 			continue
 		}
+
+		log.Println(route.method, req.URL.Path)
 
 		route.handler(w, req, params)
 		return
