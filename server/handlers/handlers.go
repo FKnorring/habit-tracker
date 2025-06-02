@@ -12,7 +12,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// HandlerFunc defines the signature for route handlers
 type HandlerFunc func(http.ResponseWriter, *http.Request, map[string]string)
 
 type route struct {
@@ -21,40 +20,32 @@ type route struct {
 	handler HandlerFunc
 }
 
-// Router handles HTTP routing with path parameters
 type Router struct {
 	routes []route
 }
 
-// Global database instance that can be set from outside
 var Database db.Database
 
-// CreateRouter creates a new router instance
 func CreateRouter() *Router {
 	return &Router{
 		routes: []route{},
 	}
 }
 
-// Handle registers a new route handler
 func (r *Router) Handle(method, pattern string, handler HandlerFunc) {
 	r.routes = append(r.routes, route{method: method, pattern: pattern, handler: handler})
 }
 
-// addCORSHeaders adds the necessary CORS headers to the response
 func addCORSHeaders(w http.ResponseWriter) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Origin", "*") // TODO: Change to only allow requests from the frontend
 	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 	w.Header().Set("Access-Control-Max-Age", "86400")
 }
 
-// ServeHTTP implements http.Handler interface
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	// Add CORS headers to all responses
 	addCORSHeaders(w)
 
-	// Handle preflight OPTIONS requests
 	if req.Method == "OPTIONS" {
 		w.WriteHeader(http.StatusOK)
 		return
@@ -80,7 +71,6 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	http.NotFound(w, req)
 }
 
-// Match matches a URL path against a pattern and extracts parameters
 func Match(pattern, path string) (map[string]string, bool) {
 	patternParts := strings.Split(strings.Trim(pattern, "/"), "/")
 	pathParts := strings.Split(strings.Trim(path, "/"), "/")
@@ -106,7 +96,6 @@ func Match(pattern, path string) (map[string]string, bool) {
 	return params, true
 }
 
-// checkParams validates that required parameters are present
 func checkParams(w http.ResponseWriter, params map[string]string, requiredParams []string) bool {
 	for _, param := range requiredParams {
 		if _, ok := params[param]; !ok {
@@ -118,7 +107,6 @@ func checkParams(w http.ResponseWriter, params map[string]string, requiredParams
 	return true
 }
 
-// GetHabits handles GET /habits
 func GetHabits(w http.ResponseWriter, r *http.Request, params map[string]string) {
 	habits, err := Database.GetAllHabits()
 	if err != nil {
@@ -132,7 +120,6 @@ func GetHabits(w http.ResponseWriter, r *http.Request, params map[string]string)
 	json.NewEncoder(w).Encode(habits)
 }
 
-// CreateHabit handles POST /habits
 func CreateHabit(w http.ResponseWriter, r *http.Request, params map[string]string) {
 	var habit db.Habit
 	if err := json.NewDecoder(r.Body).Decode(&habit); err != nil {
@@ -161,7 +148,6 @@ func CreateHabit(w http.ResponseWriter, r *http.Request, params map[string]strin
 	json.NewEncoder(w).Encode(habit)
 }
 
-// GetHabit handles GET /habits/:id
 func GetHabit(w http.ResponseWriter, r *http.Request, params map[string]string) {
 	if !checkParams(w, params, []string{"id"}) {
 		return
@@ -184,7 +170,6 @@ func GetHabit(w http.ResponseWriter, r *http.Request, params map[string]string) 
 	json.NewEncoder(w).Encode(habit)
 }
 
-// UpdateHabit handles PUT /habits/:id
 func UpdateHabit(w http.ResponseWriter, r *http.Request, params map[string]string) {
 	if !checkParams(w, params, []string{"id"}) {
 		return
@@ -215,7 +200,6 @@ func UpdateHabit(w http.ResponseWriter, r *http.Request, params map[string]strin
 	json.NewEncoder(w).Encode(habit)
 }
 
-// DeleteHabit handles DELETE /habits/:id
 func DeleteHabit(w http.ResponseWriter, r *http.Request, params map[string]string) {
 	if !checkParams(w, params, []string{"id"}) {
 		return
@@ -235,7 +219,6 @@ func DeleteHabit(w http.ResponseWriter, r *http.Request, params map[string]strin
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// CreateTracking handles POST /habits/:id/tracking
 func CreateTracking(w http.ResponseWriter, r *http.Request, params map[string]string) {
 	if !checkParams(w, params, []string{"id"}) {
 		return
@@ -274,7 +257,6 @@ func CreateTracking(w http.ResponseWriter, r *http.Request, params map[string]st
 	json.NewEncoder(w).Encode(entry)
 }
 
-// GetTracking handles GET /habits/:id/tracking
 func GetTracking(w http.ResponseWriter, r *http.Request, params map[string]string) {
 	if !checkParams(w, params, []string{"id"}) {
 		return

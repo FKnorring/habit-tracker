@@ -20,7 +20,6 @@ func NewSQLiteDatabase(dbPath string) (*SQLiteDatabase, error) {
 
 	sqliteDB := &SQLiteDatabase{db: db}
 
-	// Create tables if they don't exist
 	if err := sqliteDB.createTables(); err != nil {
 		db.Close()
 		return nil, fmt.Errorf("failed to create tables: %w", err)
@@ -73,7 +72,6 @@ func (db *SQLiteDatabase) CreateHabit(habit *Habit) error {
 
 	_, err := db.db.Exec(query, habit.ID, habit.Name, habit.Description, habit.Frequency, habit.StartDate)
 	if err != nil {
-		// Check for duplicate key error (UNIQUE constraint failed)
 		if sqliteError, ok := err.(interface{ Error() string }); ok {
 			if containsString(sqliteError.Error(), "UNIQUE constraint failed") {
 				return ErrDuplicate
@@ -181,7 +179,6 @@ func (db *SQLiteDatabase) CreateTrackingEntry(entry *TrackingEntry) error {
 
 	_, err := db.db.Exec(query, entry.ID, entry.HabitID, entry.Timestamp, entry.Note)
 	if err != nil {
-		// Check for duplicate key error
 		if sqliteError, ok := err.(interface{ Error() string }); ok {
 			if containsString(sqliteError.Error(), "UNIQUE constraint failed") {
 				return ErrDuplicate
@@ -257,7 +254,6 @@ func (db *SQLiteDatabase) DeleteTrackingEntry(id string) error {
 	return nil
 }
 
-// Helper function to check if a string contains a substring
 func containsString(s, substr string) bool {
 	return strings.Contains(s, substr)
 }

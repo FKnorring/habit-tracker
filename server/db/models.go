@@ -25,7 +25,6 @@ type TrackingEntry struct {
 }
 
 type Database interface {
-	// Connection health check
 	Ping() error
 
 	CreateHabit(habit *Habit) error

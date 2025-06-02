@@ -12,7 +12,7 @@ BINARY_UNIX=$(BINARY_NAME)_unix
 all: test build
 
 build:
-	$(GOBUILD) -o $(BINARY_NAME).out -v ./...
+	$(GOBUILD) -o out/ -v ./...
 
 # Test commands
 test: test-unit test-integration test-router

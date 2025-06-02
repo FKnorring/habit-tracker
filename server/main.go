@@ -20,16 +20,13 @@ import (
 */
 
 func main() {
-	// Initialize database from configuration
 	database, err := db.NewDatabaseFromConfig()
 	if err != nil {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
 
-	// Set the database in the handlers package
 	handlers.Database = database
 
-	// Check database connection health
 	if err := database.Ping(); err != nil {
 		log.Fatalf("Database connection failed: %v", err)
 	}
