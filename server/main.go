@@ -7,36 +7,6 @@ import (
 )
 
 /*
-	Habit:
-		id
-		name
-		description
-		frequency
-		startDate
-
-	Tracking:
-		id
-		habitId
-		timestamp
-		note?
-*/
-
-type Habit struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Frequency   string `json:"frequency"`
-	StartDate   string `json:"startDate"`
-}
-
-type Tracking struct {
-	ID        string `json:"id"`
-	HabitID   string `json:"habitId"`
-	Timestamp string `json:"timestamp"`
-	Note      string `json:"note"`
-}
-
-/*
 	Endpoints:
 		GET /habits
 		GET /habits/:id
@@ -52,12 +22,12 @@ var habits = []Habit{
 	{ID: "2", Name: "Habit 2", Description: "Description 2", Frequency: "Weekly", StartDate: "2021-01-01"},
 }
 
-var trackings = []Tracking{
+var trackings = []TrackingEntry{
 	{ID: "1", HabitID: "1", Timestamp: "2021-01-01", Note: "Note 1"},
 	{ID: "2", HabitID: "2", Timestamp: "2021-01-01", Note: "Note 2"},
 }
 
-func getHabits(w http.ResponseWriter, r *http.Request) {
+func getHabits(w http.ResponseWriter, r *http.Request, params map[string]string) {
 	// get habits stub
 	json.NewEncoder(w).Encode(habits)
 	w.WriteHeader(http.StatusOK)
@@ -65,7 +35,7 @@ func getHabits(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func createHabit(w http.ResponseWriter, r *http.Request) {
+func createHabit(w http.ResponseWriter, r *http.Request, params map[string]string) {
 	// create habit stub
 	habit := Habit{ID: "3", Name: "Habit 3", Description: "Description 3", Frequency: "Monthly", StartDate: "2021-01-01"}
 	json.NewEncoder(w).Encode(habit)
@@ -74,16 +44,7 @@ func createHabit(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func habitsHandler(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case "GET":
-		getHabits(w, r)
-	case "POST":
-		createHabit(w, r)
-	}
-}
-
-func getHabit(w http.ResponseWriter, r *http.Request) {
+func getHabit(w http.ResponseWriter, r *http.Request, params map[string]string) {
 	// get habit stub
 	habit := habits[0]
 	json.NewEncoder(w).Encode(habit)
@@ -92,7 +53,7 @@ func getHabit(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func updateHabit(w http.ResponseWriter, r *http.Request) {
+func updateHabit(w http.ResponseWriter, r *http.Request, params map[string]string) {
 	// update habit stub
 	habit := habits[0]
 	json.NewEncoder(w).Encode(habit)
@@ -101,7 +62,7 @@ func updateHabit(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func deleteHabit(w http.ResponseWriter, r *http.Request) {
+func deleteHabit(w http.ResponseWriter, r *http.Request, params map[string]string) {
 	// delete habit stub
 	json.NewEncoder(w).Encode(nil)
 	w.WriteHeader(http.StatusOK)
@@ -109,18 +70,7 @@ func deleteHabit(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func habitHandler(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case "GET":
-		getHabit(w, r)
-	case "PUT":
-		updateHabit(w, r)
-	case "DELETE":
-		deleteHabit(w, r)
-	}
-}
-
-func createTracking(w http.ResponseWriter, r *http.Request) {
+func createTracking(w http.ResponseWriter, r *http.Request, params map[string]string) {
 	// create tracking stub
 	tracking := trackings[0]
 	json.NewEncoder(w).Encode(tracking)
@@ -129,7 +79,7 @@ func createTracking(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func getTracking(w http.ResponseWriter, r *http.Request) {
+func getTracking(w http.ResponseWriter, r *http.Request, params map[string]string) {
 	// get tracking stub
 	tracking := trackings[0]
 	json.NewEncoder(w).Encode(tracking)
@@ -138,19 +88,17 @@ func getTracking(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func trackingHandler(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case "POST":
-		createTracking(w, r)
-	case "GET":
-		getTracking(w, r)
-	}
-}
-
 func main() {
-	http.HandleFunc("/habits", habitsHandler)
-	http.HandleFunc("/habits/:id", habitHandler)
-	http.HandleFunc("/habits/:id/tracking", trackingHandler)
+	router := CreateRouter()
+
+	router.Handle("GET", "/habits", getHabits)
+	router.Handle("POST", "/habits", createHabit)
+	router.Handle("GET", "/habits/:id", getHabit)
+	router.Handle("PUT", "/habits/:id", updateHabit)
+	router.Handle("DELETE", "/habits/:id", deleteHabit)
+	router.Handle("POST", "/habits/:id/tracking", createTracking)
+	router.Handle("GET", "/habits/:id/tracking", getTracking)
+
 	log.Println("Server is running on port 8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(":8080", router))
 }
