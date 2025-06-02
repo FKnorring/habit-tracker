@@ -5,25 +5,30 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"habit-tracker/server/handlers"
+
 	"github.com/stretchr/testify/assert"
 )
 
 func TestCreateRouter(t *testing.T) {
-	router := CreateRouter()
+	router := handlers.CreateRouter()
 	assert.NotNil(t, router)
-	assert.Empty(t, router.routes)
+	// Note: we can't directly access router.routes anymore since it's unexported
+	// But we can test the functionality instead
 }
 
 func TestRouterHandle(t *testing.T) {
-	router := CreateRouter()
+	router := handlers.CreateRouter()
 	testHandler := func(w http.ResponseWriter, r *http.Request, params map[string]string) {
 		w.WriteHeader(http.StatusOK)
 	}
 
 	router.Handle("GET", "/test", testHandler)
-	assert.Len(t, router.routes, 1)
-	assert.Equal(t, "GET", router.routes[0].method)
-	assert.Equal(t, "/test", router.routes[0].pattern)
+	// We can't directly check routes slice, but we can test by making a request
+	req := httptest.NewRequest("GET", "/test", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
 }
 
 func TestMatchFunction(t *testing.T) {
@@ -94,7 +99,7 @@ func TestMatchFunction(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			params, matched := match(tt.pattern, tt.path)
+			params, matched := handlers.Match(tt.pattern, tt.path)
 			assert.Equal(t, tt.expectedMatch, matched)
 			if tt.expectedMatch {
 				assert.Equal(t, tt.expectedParams, params)
@@ -106,7 +111,7 @@ func TestMatchFunction(t *testing.T) {
 }
 
 func TestRouterServeHTTP(t *testing.T) {
-	router := CreateRouter()
+	router := handlers.CreateRouter()
 
 	// Register test handlers
 	router.Handle("GET", "/test", func(w http.ResponseWriter, r *http.Request, params map[string]string) {
@@ -182,7 +187,7 @@ func TestRouterServeHTTP(t *testing.T) {
 }
 
 func TestCORSHeaders(t *testing.T) {
-	router := CreateRouter()
+	router := handlers.CreateRouter()
 	router.Handle("GET", "/test", func(w http.ResponseWriter, r *http.Request, params map[string]string) {
 		w.WriteHeader(http.StatusOK)
 	})
@@ -198,13 +203,13 @@ func TestCORSHeaders(t *testing.T) {
 	assert.Equal(t, "86400", w.Header().Get("Access-Control-Max-Age"))
 }
 
-func TestOptionsRequest(t *testing.T) {
-	router := CreateRouter()
+func TestOPTIONSRequest(t *testing.T) {
+	router := handlers.CreateRouter()
 	router.Handle("GET", "/test", func(w http.ResponseWriter, r *http.Request, params map[string]string) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	// Test OPTIONS preflight request
+	// Test preflight OPTIONS request
 	req := httptest.NewRequest("OPTIONS", "/test", nil)
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
@@ -212,4 +217,6 @@ func TestOptionsRequest(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.Equal(t, "*", w.Header().Get("Access-Control-Allow-Origin"))
 	assert.Equal(t, "GET, POST, PUT, DELETE, OPTIONS", w.Header().Get("Access-Control-Allow-Methods"))
+	assert.Equal(t, "Content-Type, Authorization", w.Header().Get("Access-Control-Allow-Headers"))
+	assert.Equal(t, "86400", w.Header().Get("Access-Control-Max-Age"))
 }

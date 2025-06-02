@@ -12,7 +12,7 @@ BINARY_UNIX=$(BINARY_NAME)_unix
 all: test build
 
 build:
-	$(GOBUILD) -o $(BINARY_NAME) -v ./...
+	$(GOBUILD) -o $(BINARY_NAME).out -v ./...
 
 # Test commands
 test: test-unit test-integration test-router
@@ -23,11 +23,11 @@ test-unit:
 
 test-integration:
 	@echo "Running integration tests..."
-	$(GOTEST) -v -run "TestIntegrationTestSuite" .
+	$(GOTEST) -v -run "TestIntegrationTestSuite" ./tests/
 
 test-router:
 	@echo "Running router tests..."
-	$(GOTEST) -v -run "TestCreateRouter|TestRouterHandle|TestMatchFunction|TestRouterServeHTTP|TestCORSHeaders|TestOptionsRequest" .
+	$(GOTEST) -v -run "TestCreateRouter|TestRouterHandle|TestMatchFunction|TestRouterServeHTTP|TestCORSHeaders|TestOptionsRequest" ./tests/
 
 test-coverage:
 	@echo "Running tests with coverage..."
