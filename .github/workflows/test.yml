@@ -94,7 +94,7 @@ jobs:
     - name: Test binary runs
       working-directory: ./server
       run: |
-        timeout 5s ./habit-tracker -db-driver=memory || [ $? -eq 124 ]
+        timeout 5s ./out/server -db-driver=memory || [ $? -eq 124 ]
 
   test-database-drivers:
     runs-on: ubuntu-latest
