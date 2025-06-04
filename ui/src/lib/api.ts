@@ -54,12 +54,12 @@ export const api = {
     const response = await fetch(`${API_BASE_URL}/habits/${id}`, {
       method: 'DELETE',
     });
+    console.log(response);
     if (!response.ok) {
       throw new ApiError(`HTTP error! status: ${response.status}`, response.status);
     }
   },
 
-  // Tracking operations
   async getTrackingEntries(habitId: string): Promise<TrackingEntry[]> {
     const response = await fetch(`${API_BASE_URL}/habits/${habitId}/tracking`);
     return handleResponse<TrackingEntry[]>(response);

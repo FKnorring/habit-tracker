@@ -438,7 +438,7 @@ func (suite *IntegrationTestSuite) TestFullWorkflow() {
 	jsonData, err = json.Marshal(updatedHabit)
 	suite.NoError(err)
 
-	req, err := http.NewRequest("PUT", suite.server.URL+"/habits/"+habitID, bytes.NewBuffer(jsonData))
+	req, err := http.NewRequest("PATCH", suite.server.URL+"/habits/"+habitID, bytes.NewBuffer(jsonData))
 	suite.NoError(err)
 	req.Header.Set("Content-Type", "application/json")
 
