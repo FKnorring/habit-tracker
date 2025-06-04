@@ -33,7 +33,7 @@ func (suite *IntegrationTestSuite) SetupSuite() {
 	suite.router.Handle("GET", "/habits", handlers.GetHabits)
 	suite.router.Handle("POST", "/habits", handlers.CreateHabit)
 	suite.router.Handle("GET", "/habits/:id", handlers.GetHabit)
-	suite.router.Handle("PUT", "/habits/:id", handlers.UpdateHabit)
+	suite.router.Handle("PATCH", "/habits/:id", handlers.UpdateHabit)
 	suite.router.Handle("DELETE", "/habits/:id", handlers.DeleteHabit)
 	suite.router.Handle("POST", "/habits/:id/tracking", handlers.CreateTracking)
 	suite.router.Handle("GET", "/habits/:id/tracking", handlers.GetTracking)
@@ -159,7 +159,7 @@ func (suite *IntegrationTestSuite) TestUpdateHabit() {
 	jsonData, err := json.Marshal(updatedHabit)
 	suite.NoError(err)
 
-	req, err := http.NewRequest("PUT", suite.server.URL+"/habits/test-habit-2", bytes.NewBuffer(jsonData))
+	req, err := http.NewRequest("PATCH", suite.server.URL+"/habits/test-habit-2", bytes.NewBuffer(jsonData))
 	suite.NoError(err)
 	req.Header.Set("Content-Type", "application/json")
 
@@ -188,7 +188,7 @@ func (suite *IntegrationTestSuite) TestUpdateHabitNotFound() {
 	jsonData, err := json.Marshal(updatedHabit)
 	suite.NoError(err)
 
-	req, err := http.NewRequest("PUT", suite.server.URL+"/habits/nonexistent", bytes.NewBuffer(jsonData))
+	req, err := http.NewRequest("PATCH", suite.server.URL+"/habits/nonexistent", bytes.NewBuffer(jsonData))
 	suite.NoError(err)
 	req.Header.Set("Content-Type", "application/json")
 

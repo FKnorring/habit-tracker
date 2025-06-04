@@ -37,7 +37,7 @@ func main() {
 	router.Handle("GET", "/habits", handlers.GetHabits)
 	router.Handle("POST", "/habits", handlers.CreateHabit)
 	router.Handle("GET", "/habits/:id", handlers.GetHabit)
-	router.Handle("PUT", "/habits/:id", handlers.UpdateHabit)
+	router.Handle("PATCH", "/habits/:id", handlers.UpdateHabit)
 	router.Handle("DELETE", "/habits/:id", handlers.DeleteHabit)
 	router.Handle("POST", "/habits/:id/tracking", handlers.CreateTracking)
 	router.Handle("GET", "/habits/:id/tracking", handlers.GetTracking)

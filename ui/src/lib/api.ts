@@ -41,7 +41,7 @@ export const api = {
 
   async updateHabit(id: string, habit: Partial<Omit<Habit, 'id'>>): Promise<Habit> {
     const response = await fetch(`${API_BASE_URL}/habits/${id}`, {
-      method: 'PUT',
+      method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
       },

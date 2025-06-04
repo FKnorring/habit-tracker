@@ -61,7 +61,7 @@ All database operations are defined through the `Database` interface in `models.
 - `GET /habits` - Get all habits
 - `GET /habits/:id` - Get a specific habit
 - `POST /habits` - Create a new habit
-- `PUT /habits/:id` - Update a habit
+- `PATCH /habits/:id` - Update a habit
 - `DELETE /habits/:id` - Delete a habit
 - `POST /habits/:id/tracking` - Add tracking entry
 - `GET /habits/:id/tracking` - Get tracking entries
@@ -69,15 +69,15 @@ All database operations are defined through the `Database` interface in `models.
 ## Data Models
 
 ### Habit
-- `id`: `string` (UUID) - Unique identifier for the habit
-- `name`: `string` - Name of the habit
-- `description`: `string` - Detailed description of the habit
-- `frequency`: `string` - How often the habit should be performed
-- `startDate`: `string` - When the habit tracking started
+- `id`: *string* (UUID) - Unique identifier for the habit
+- `name`: *string* - Name of the habit
+- `description`: *string* - Detailed description of the habit
+- `frequency`: *string* - How often the habit should be performed
+- `startDate`: *datetime* - When the habit tracking started
 
 ### TrackingEntry
-- `id`: `string` (UUID) - Unique identifier for the tracking entry
-- `habitId`: `string` (UUID) - Reference to the associated habit
-- `timestamp`: `string` - When the habit was completed
-- `note`: `string` - Optional note about the completion
+- `id`: *string* (UUID) - Unique identifier for the tracking entry
+- `habitId`: *string* (UUID) - Reference to the associated habit
+- `timestamp`: *datetime* - When the habit was completed
+- `note`: *string* - Optional note about the completion
 
