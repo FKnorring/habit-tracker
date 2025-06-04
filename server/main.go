@@ -6,6 +6,7 @@ import (
 
 	"habit-tracker/server/db"
 	"habit-tracker/server/handlers"
+	"habit-tracker/server/sockets"
 )
 
 /*
@@ -17,6 +18,7 @@ import (
 		DELETE /habits/:id
 		POST /habits/:id/tracking
 		GET /habits/:id/tracking
+		WS /ws
 */
 
 func main() {
@@ -32,6 +34,10 @@ func main() {
 	}
 	log.Println("Database connection successful")
 
+	// Start websocket message handler
+	go sockets.HandleMessages()
+
+	// Create custom router for API endpoints
 	router := handlers.CreateRouter()
 
 	router.Handle("GET", "/habits", handlers.GetHabits)
@@ -42,6 +48,11 @@ func main() {
 	router.Handle("POST", "/habits/:id/tracking", handlers.CreateTracking)
 	router.Handle("GET", "/habits/:id/tracking", handlers.GetTracking)
 
+	// Create a main mux that handles both websockets and API routes
+	mux := http.NewServeMux()
+	mux.HandleFunc("/ws", sockets.WSHandler)
+	mux.Handle("/", router)
+
 	log.Println("Server is running on port 8080")
-	log.Fatal(http.ListenAndServe(":8080", router))
+	log.Fatal(http.ListenAndServe(":8080", mux))
 }
