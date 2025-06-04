@@ -21,7 +21,7 @@ export function HabitCard({ habit, onHabitUpdate, onHabitDelete }: HabitCardProp
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [trackingNote, setTrackingNote] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [trackingEntries, setTrackingEntries] = useState<TrackingEntry[]>([]);
+  const [trackingEntries, setTrackingEntries] = useState<TrackingEntry[] | null>([]);
   const [showEntries, setShowEntries] = useState(false);
 
   const handleTrack = async () => {
@@ -146,7 +146,7 @@ export function HabitCard({ habit, onHabitUpdate, onHabitDelete }: HabitCardProp
         {showEntries && (
           <div className="space-y-2">
             <h4 className="font-semibold">Recent Entries:</h4>
-            {trackingEntries.length === 0 ? (
+            {!trackingEntries || trackingEntries.length === 0 ? (
               <p className="text-muted-foreground">No tracking entries yet.</p>
             ) : (
               <div className="max-h-32 overflow-y-auto space-y-1">

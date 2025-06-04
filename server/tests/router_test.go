@@ -13,8 +13,6 @@ import (
 func TestCreateRouter(t *testing.T) {
 	router := handlers.CreateRouter()
 	assert.NotNil(t, router)
-	// Note: we can't directly access router.routes anymore since it's unexported
-	// But we can test the functionality instead
 }
 
 func TestRouterHandle(t *testing.T) {
@@ -24,7 +22,6 @@ func TestRouterHandle(t *testing.T) {
 	}
 
 	router.Handle("GET", "/test", testHandler)
-	// We can't directly check routes slice, but we can test by making a request
 	req := httptest.NewRequest("GET", "/test", nil)
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
@@ -113,7 +110,6 @@ func TestMatchFunction(t *testing.T) {
 func TestRouterServeHTTP(t *testing.T) {
 	router := handlers.CreateRouter()
 
-	// Register test handlers
 	router.Handle("GET", "/test", func(w http.ResponseWriter, r *http.Request, params map[string]string) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("GET test"))
