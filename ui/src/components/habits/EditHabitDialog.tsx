@@ -1,17 +1,28 @@
 'use client';
 
 import { useState } from 'react';
-import { Habit } from '@/types';
+import { Habit, Frequency } from '@/types';
 import { useHabits } from '@/components/contexts/HabitsContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface EditHabitDialogProps {
   habit: Habit;
   children?: React.ReactNode;
 }
+
+const frequencyOptions = [
+  { value: Frequency.HOURLY, label: 'Hourly' },
+  { value: Frequency.DAILY, label: 'Daily' },
+  { value: Frequency.WEEKLY, label: 'Weekly' },
+  { value: Frequency.BIWEEKLY, label: 'Biweekly' },
+  { value: Frequency.MONTHLY, label: 'Monthly' },
+  { value: Frequency.QUARTERLY, label: 'Quarterly' },
+  { value: Frequency.YEARLY, label: 'Yearly' },
+];
 
 export function EditHabitDialog({ habit, children }: EditHabitDialogProps) {
   const { updateHabit } = useHabits();
@@ -19,7 +30,7 @@ export function EditHabitDialog({ habit, children }: EditHabitDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editName, setEditName] = useState(habit.name);
   const [editDescription, setEditDescription] = useState(habit.description);
-  const [editFrequency, setEditFrequency] = useState(habit.frequency);
+  const [editFrequency, setEditFrequency] = useState<Frequency>(habit.frequency);
 
   const handleEdit = async () => {
     if (isSubmitting) return;
@@ -79,12 +90,18 @@ export function EditHabitDialog({ habit, children }: EditHabitDialogProps) {
           </div>
           <div className="space-y-2">
             <Label htmlFor="edit-frequency">Frequency</Label>
-            <Input
-              id="edit-frequency"
-              placeholder="e.g., Daily, Weekly, etc."
-              value={editFrequency}
-              onChange={(e) => setEditFrequency(e.target.value)}
-            />
+            <Select value={editFrequency} onValueChange={(value: Frequency) => setEditFrequency(value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select frequency" />
+              </SelectTrigger>
+              <SelectContent>
+                {frequencyOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="flex gap-2">
             <Button onClick={handleEdit} disabled={isSubmitting || !editName.trim()}>

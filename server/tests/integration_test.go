@@ -70,7 +70,7 @@ func (suite *IntegrationTestSuite) TestCreateHabit() {
 	habitData := db.Habit{
 		Name:        "Exercise",
 		Description: "Daily workout routine",
-		Frequency:   "daily",
+		Frequency:   db.FrequencyDaily,
 		StartDate:   "2024-01-01",
 	}
 
@@ -102,13 +102,31 @@ func (suite *IntegrationTestSuite) TestCreateHabitInvalidJSON() {
 	suite.Equal(http.StatusBadRequest, resp.StatusCode)
 }
 
+func (suite *IntegrationTestSuite) TestCreateHabitInvalidFrequency() {
+	habitData := map[string]interface{}{
+		"name":        "Exercise",
+		"description": "Daily workout routine",
+		"frequency":   "invalid_frequency",
+		"startDate":   "2024-01-01",
+	}
+
+	jsonData, err := json.Marshal(habitData)
+	suite.NoError(err)
+
+	resp, err := http.Post(suite.server.URL+"/habits", "application/json", bytes.NewBuffer(jsonData))
+	suite.NoError(err)
+	defer resp.Body.Close()
+
+	suite.Equal(http.StatusBadRequest, resp.StatusCode)
+}
+
 func (suite *IntegrationTestSuite) TestGetHabitById() {
 	// First create a habit
 	habit := &db.Habit{
 		ID:          "test-habit-1",
 		Name:        "Reading",
 		Description: "Read for 30 minutes",
-		Frequency:   "daily",
+		Frequency:   db.FrequencyDaily,
 		StartDate:   "2024-01-01",
 	}
 	err := handlers.Database.CreateHabit(habit)
@@ -142,7 +160,7 @@ func (suite *IntegrationTestSuite) TestUpdateHabit() {
 		ID:          "test-habit-2",
 		Name:        "Meditation",
 		Description: "Daily meditation",
-		Frequency:   "daily",
+		Frequency:   db.FrequencyDaily,
 		StartDate:   "2024-01-01",
 	}
 	err := handlers.Database.CreateHabit(habit)
@@ -152,7 +170,7 @@ func (suite *IntegrationTestSuite) TestUpdateHabit() {
 	updatedHabit := db.Habit{
 		Name:        "Updated Meditation",
 		Description: "Updated daily meditation practice",
-		Frequency:   "twice daily",
+		Frequency:   db.FrequencyWeekly,
 		StartDate:   "2024-01-02",
 	}
 
@@ -181,7 +199,7 @@ func (suite *IntegrationTestSuite) TestUpdateHabitNotFound() {
 	updatedHabit := db.Habit{
 		Name:        "Nonexistent",
 		Description: "This habit doesn't exist",
-		Frequency:   "never",
+		Frequency:   db.FrequencyHourly,
 		StartDate:   "2024-01-01",
 	}
 
@@ -200,13 +218,48 @@ func (suite *IntegrationTestSuite) TestUpdateHabitNotFound() {
 	suite.Equal(http.StatusNotFound, resp.StatusCode)
 }
 
+func (suite *IntegrationTestSuite) TestUpdateHabitInvalidFrequency() {
+	// First create a habit
+	habit := &db.Habit{
+		ID:          "test-habit-invalid-freq",
+		Name:        "Test Habit",
+		Description: "Test description",
+		Frequency:   db.FrequencyDaily,
+		StartDate:   "2024-01-01",
+	}
+	err := handlers.Database.CreateHabit(habit)
+	suite.NoError(err)
+
+	// Try to update with invalid frequency
+	updateData := map[string]interface{}{
+		"name":        "Updated Test Habit",
+		"description": "Updated description",
+		"frequency":   "invalid_frequency",
+		"startDate":   "2024-01-01",
+	}
+
+	jsonData, err := json.Marshal(updateData)
+	suite.NoError(err)
+
+	req, err := http.NewRequest("PATCH", suite.server.URL+"/habits/test-habit-invalid-freq", bytes.NewBuffer(jsonData))
+	suite.NoError(err)
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	suite.NoError(err)
+	defer resp.Body.Close()
+
+	suite.Equal(http.StatusBadRequest, resp.StatusCode)
+}
+
 func (suite *IntegrationTestSuite) TestDeleteHabit() {
 	// First create a habit
 	habit := &db.Habit{
 		ID:          "test-habit-3",
 		Name:        "Journaling",
 		Description: "Daily journaling",
-		Frequency:   "daily",
+		Frequency:   db.FrequencyDaily,
 		StartDate:   "2024-01-01",
 	}
 	err := handlers.Database.CreateHabit(habit)
@@ -246,7 +299,7 @@ func (suite *IntegrationTestSuite) TestCreateTracking() {
 		ID:          "test-habit-4",
 		Name:        "Running",
 		Description: "Daily run",
-		Frequency:   "daily",
+		Frequency:   db.FrequencyDaily,
 		StartDate:   "2024-01-01",
 	}
 	err := handlers.Database.CreateHabit(habit)
@@ -282,7 +335,7 @@ func (suite *IntegrationTestSuite) TestCreateTrackingWithCustomTimestamp() {
 		ID:          "test-habit-5",
 		Name:        "Water",
 		Description: "Drink water",
-		Frequency:   "hourly",
+		Frequency:   db.FrequencyHourly,
 		StartDate:   "2024-01-01",
 	}
 	err := handlers.Database.CreateHabit(habit)
@@ -316,7 +369,7 @@ func (suite *IntegrationTestSuite) TestGetTracking() {
 		ID:          "test-habit-6",
 		Name:        "Stretching",
 		Description: "Daily stretching",
-		Frequency:   "daily",
+		Frequency:   db.FrequencyDaily,
 		StartDate:   "2024-01-01",
 	}
 	err := handlers.Database.CreateHabit(habit)
@@ -362,7 +415,7 @@ func (suite *IntegrationTestSuite) TestGetTrackingEmpty() {
 		ID:          "test-habit-7",
 		Name:        "Empty Habit",
 		Description: "No tracking entries",
-		Frequency:   "daily",
+		Frequency:   db.FrequencyDaily,
 		StartDate:   "2024-01-01",
 	}
 	err := handlers.Database.CreateHabit(habit)
@@ -388,7 +441,7 @@ func (suite *IntegrationTestSuite) TestFullWorkflow() {
 	habitData := db.Habit{
 		Name:        "Full Workflow Test",
 		Description: "Testing complete workflow",
-		Frequency:   "daily",
+		Frequency:   db.FrequencyDaily,
 		StartDate:   "2024-01-01",
 	}
 
@@ -431,7 +484,7 @@ func (suite *IntegrationTestSuite) TestFullWorkflow() {
 	updatedHabit := db.Habit{
 		Name:        "Updated Workflow Test",
 		Description: "Updated workflow description",
-		Frequency:   "weekly",
+		Frequency:   db.FrequencyWeekly,
 		StartDate:   "2024-01-02",
 	}
 

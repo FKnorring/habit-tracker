@@ -87,8 +87,9 @@ func (db *SQLiteDatabase) GetHabit(id string) (*Habit, error) {
 	query := `SELECT id, name, description, frequency, start_date FROM habits WHERE id = ?`
 
 	habit := &Habit{}
+	var frequencyStr string
 	err := db.db.QueryRow(query, id).Scan(
-		&habit.ID, &habit.Name, &habit.Description, &habit.Frequency, &habit.StartDate,
+		&habit.ID, &habit.Name, &habit.Description, &frequencyStr, &habit.StartDate,
 	)
 
 	if err != nil {
@@ -98,6 +99,7 @@ func (db *SQLiteDatabase) GetHabit(id string) (*Habit, error) {
 		return nil, fmt.Errorf("failed to get habit: %w", err)
 	}
 
+	habit.Frequency = Frequency(frequencyStr)
 	return habit, nil
 }
 
@@ -113,10 +115,12 @@ func (db *SQLiteDatabase) GetAllHabits() ([]*Habit, error) {
 	var habits []*Habit
 	for rows.Next() {
 		habit := &Habit{}
-		err := rows.Scan(&habit.ID, &habit.Name, &habit.Description, &habit.Frequency, &habit.StartDate)
+		var frequencyStr string
+		err := rows.Scan(&habit.ID, &habit.Name, &habit.Description, &frequencyStr, &habit.StartDate)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan habit: %w", err)
 		}
+		habit.Frequency = Frequency(frequencyStr)
 		habits = append(habits, habit)
 	}
 

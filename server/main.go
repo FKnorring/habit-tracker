@@ -13,7 +13,7 @@ import (
 		GET /habits
 		GET /habits/:id
 		POST /habits
-		PUT /habits/:id
+		PATCH /habits/:id
 		DELETE /habits/:id
 		POST /habits/:id/tracking
 		GET /habits/:id/tracking

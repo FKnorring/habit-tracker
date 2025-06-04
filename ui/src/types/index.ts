@@ -1,8 +1,18 @@
+export enum Frequency {
+  HOURLY = "hourly",
+  DAILY = "daily", 
+  WEEKLY = "weekly",
+  BIWEEKLY = "biweekly",
+  MONTHLY = "monthly",
+  QUARTERLY = "quarterly",
+  YEARLY = "yearly"
+}
+
 export interface Habit {
   id: string;
   name: string;
   description: string;
-  frequency: string;
+  frequency: Frequency;
   startDate: string;
 }
 
@@ -16,7 +26,7 @@ export interface TrackingEntry {
 export interface CreateHabitRequest {
   name: string;
   description: string;
-  frequency: string;
+  frequency: Frequency;
   startDate: string;
 }
 

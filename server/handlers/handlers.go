@@ -42,6 +42,13 @@ func CreateHabit(w http.ResponseWriter, r *http.Request, params map[string]strin
 		return
 	}
 
+	// Validate frequency
+	if err := db.ValidateFrequency(string(habit.Frequency)); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Invalid frequency: must be one of hourly, daily, weekly, biweekly, monthly, quarterly, yearly"))
+		return
+	}
+
 	if habit.ID == "" {
 		habit.ID = uuid.New().String()
 	}
@@ -93,6 +100,13 @@ func UpdateHabit(w http.ResponseWriter, r *http.Request, params map[string]strin
 	if err := json.NewDecoder(r.Body).Decode(&habit); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte("Invalid JSON"))
+		return
+	}
+
+	// Validate frequency
+	if err := db.ValidateFrequency(string(habit.Frequency)); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Invalid frequency: must be one of hourly, daily, weekly, biweekly, monthly, quarterly, yearly"))
 		return
 	}
 

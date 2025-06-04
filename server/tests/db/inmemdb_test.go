@@ -34,7 +34,7 @@ func (suite *InMemoryDBTestSuite) TestCreateHabit() {
 		ID:          "test-habit-1",
 		Name:        "Exercise",
 		Description: "Daily workout",
-		Frequency:   "daily",
+		Frequency:   db.FrequencyDaily,
 		StartDate:   "2024-01-01",
 	}
 
@@ -60,7 +60,7 @@ func (suite *InMemoryDBTestSuite) TestCreateHabitDuplicate() {
 		ID:          "test-habit-1",
 		Name:        "Exercise",
 		Description: "Daily workout",
-		Frequency:   "daily",
+		Frequency:   db.FrequencyDaily,
 		StartDate:   "2024-01-01",
 	}
 
@@ -78,7 +78,7 @@ func (suite *InMemoryDBTestSuite) TestGetHabit() {
 		ID:          "test-habit-1",
 		Name:        "Exercise",
 		Description: "Daily workout",
-		Frequency:   "daily",
+		Frequency:   db.FrequencyDaily,
 		StartDate:   "2024-01-01",
 	}
 
@@ -118,14 +118,14 @@ func (suite *InMemoryDBTestSuite) TestGetAllHabits() {
 			ID:          "habit-1",
 			Name:        "Exercise",
 			Description: "Daily workout",
-			Frequency:   "daily",
+			Frequency:   db.FrequencyDaily,
 			StartDate:   "2024-01-01",
 		},
 		{
 			ID:          "habit-2",
 			Name:        "Reading",
 			Description: "Read for 30 minutes",
-			Frequency:   "daily",
+			Frequency:   db.FrequencyDaily,
 			StartDate:   "2024-01-01",
 		},
 	}
@@ -161,7 +161,7 @@ func (suite *InMemoryDBTestSuite) TestUpdateHabit() {
 		ID:          "test-habit-1",
 		Name:        "Exercise",
 		Description: "Daily workout",
-		Frequency:   "daily",
+		Frequency:   db.FrequencyDaily,
 		StartDate:   "2024-01-01",
 	}
 
@@ -174,7 +174,7 @@ func (suite *InMemoryDBTestSuite) TestUpdateHabit() {
 		ID:          "test-habit-1",
 		Name:        "Updated Exercise",
 		Description: "Updated daily workout",
-		Frequency:   "twice daily",
+		Frequency:   db.FrequencyWeekly,
 		StartDate:   "2024-01-02",
 	}
 
@@ -195,7 +195,7 @@ func (suite *InMemoryDBTestSuite) TestUpdateHabitNotFound() {
 		ID:          "nonexistent",
 		Name:        "Exercise",
 		Description: "Daily workout",
-		Frequency:   "daily",
+		Frequency:   db.FrequencyDaily,
 		StartDate:   "2024-01-01",
 	}
 
@@ -208,7 +208,7 @@ func (suite *InMemoryDBTestSuite) TestDeleteHabit() {
 		ID:          "test-habit-1",
 		Name:        "Exercise",
 		Description: "Daily workout",
-		Frequency:   "daily",
+		Frequency:   db.FrequencyDaily,
 		StartDate:   "2024-01-01",
 	}
 
@@ -384,7 +384,7 @@ func (suite *InMemoryDBTestSuite) TestConcurrentAccess() {
 		ID:          "concurrent-habit",
 		Name:        "Concurrent Test",
 		Description: "Testing concurrent access",
-		Frequency:   "daily",
+		Frequency:   db.FrequencyDaily,
 		StartDate:   "2024-01-01",
 	}
 
@@ -408,7 +408,7 @@ func TestHabitCopyIntegrity(t *testing.T) {
 		ID:          "test-habit",
 		Name:        "Original Name",
 		Description: "Original Description",
-		Frequency:   "daily",
+		Frequency:   db.FrequencyDaily,
 		StartDate:   "2024-01-01",
 	}
 
