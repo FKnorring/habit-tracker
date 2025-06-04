@@ -63,7 +63,10 @@ func (suite *IntegrationTestSuite) TestGetHabitsEmpty() {
 	var habits []db.Habit
 	err = json.NewDecoder(resp.Body).Decode(&habits)
 	suite.NoError(err)
-	suite.Empty(habits)
+
+	// Ensure we get an empty array, not null
+	suite.NotNil(habits)
+	suite.Len(habits, 0)
 }
 
 func (suite *IntegrationTestSuite) TestCreateHabit() {
@@ -431,7 +434,10 @@ func (suite *IntegrationTestSuite) TestGetTrackingEmpty() {
 	var retrievedEntries []db.TrackingEntry
 	err = json.NewDecoder(resp.Body).Decode(&retrievedEntries)
 	suite.NoError(err)
-	suite.Empty(retrievedEntries)
+
+	// Ensure we get an empty array, not null
+	suite.NotNil(retrievedEntries)
+	suite.Len(retrievedEntries, 0)
 }
 
 func (suite *IntegrationTestSuite) TestFullWorkflow() {
@@ -527,7 +533,10 @@ func (suite *IntegrationTestSuite) TestFullWorkflow() {
 
 	err = json.NewDecoder(resp.Body).Decode(&habits)
 	suite.NoError(err)
-	suite.Empty(habits)
+
+	// Ensure we get an empty array, not null
+	suite.NotNil(habits)
+	suite.Len(habits, 0)
 }
 
 func (suite *IntegrationTestSuite) TestParameterValidation() {

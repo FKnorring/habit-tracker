@@ -29,6 +29,10 @@ func GetHabits(w http.ResponseWriter, r *http.Request, params map[string]string)
 		return
 	}
 
+	if habits == nil {
+		habits = []*db.Habit{}
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(habits)
@@ -103,7 +107,6 @@ func UpdateHabit(w http.ResponseWriter, r *http.Request, params map[string]strin
 		return
 	}
 
-	// Validate frequency
 	if err := db.ValidateFrequency(string(habit.Frequency)); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte("Invalid frequency: must be one of hourly, daily, weekly, biweekly, monthly, quarterly, yearly"))
@@ -195,6 +198,10 @@ func GetTracking(w http.ResponseWriter, r *http.Request, params map[string]strin
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Failed to retrieve tracking entries"))
 		return
+	}
+
+	if entries == nil {
+		entries = []*db.TrackingEntry{}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
