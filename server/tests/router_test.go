@@ -212,7 +212,7 @@ func TestOPTIONSRequest(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.Equal(t, "*", w.Header().Get("Access-Control-Allow-Origin"))
-	assert.Equal(t, "GET, POST, PUT, DELETE, OPTIONS", w.Header().Get("Access-Control-Allow-Methods"))
+	assert.Equal(t, "GET, POST, PATCH, DELETE, OPTIONS", w.Header().Get("Access-Control-Allow-Methods"))
 	assert.Equal(t, "Content-Type, Authorization", w.Header().Get("Access-Control-Allow-Headers"))
 	assert.Equal(t, "86400", w.Header().Get("Access-Control-Max-Age"))
 }

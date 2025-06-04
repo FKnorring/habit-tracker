@@ -63,6 +63,12 @@ type TrackingEntry struct {
 	Note      string `json:"note"`
 }
 
+type Reminder struct {
+	ID           string `json:"id"`
+	HabitID      string `json:"habitId"`
+	LastReminder string `json:"lastReminder"`
+}
+
 type Database interface {
 	Ping() error
 
