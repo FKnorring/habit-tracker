@@ -82,4 +82,10 @@ type Database interface {
 	GetTrackingEntry(id string) (*TrackingEntry, error)
 	GetTrackingEntriesByHabitID(habitID string) ([]*TrackingEntry, error)
 	DeleteTrackingEntry(id string) error
+
+	CreateReminder(reminder *Reminder) error
+	GetReminder(habitID string) (*Reminder, error)
+	UpdateReminderLastReminder(habitID string, lastReminder string) error
+	GetHabitsNeedingReminders() ([]*Habit, error)
+	DeleteReminder(habitID string) error
 }

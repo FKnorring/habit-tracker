@@ -2,6 +2,7 @@ package db_test
 
 import (
 	"testing"
+	"time"
 
 	"habit-tracker/server/db"
 
@@ -397,6 +398,302 @@ func (suite *InMemoryDBTestSuite) TestConcurrentAccess() {
 	suite.Equal(habit.ID, retrieved.ID)
 }
 
+func (suite *InMemoryDBTestSuite) TestCreateReminder() {
+	// First create a habit
+	habit := &db.Habit{
+		ID:          "test-habit-1",
+		Name:        "Exercise",
+		Description: "Daily workout",
+		Frequency:   db.FrequencyDaily,
+		StartDate:   "2024-01-01",
+	}
+	err := suite.db.CreateHabit(habit)
+	suite.NoError(err)
+
+	// Get the automatically created reminder
+	stored, err := suite.db.GetReminder(habit.ID)
+	suite.NoError(err)
+	suite.NotNil(stored)
+	suite.Equal(habit.ID+"-reminder", stored.ID)
+	suite.Equal(habit.ID, stored.HabitID)
+	suite.NotEmpty(stored.LastReminder)
+
+	// Verify it's a copy, not the same reference
+	suite.NotSame(habit, stored)
+}
+
+func (suite *InMemoryDBTestSuite) TestCreateReminderDuplicate() {
+	// First create a habit
+	habit := &db.Habit{
+		ID:          "test-habit-1",
+		Name:        "Exercise",
+		Description: "Daily workout",
+		Frequency:   db.FrequencyDaily,
+		StartDate:   "2024-01-01",
+	}
+	err := suite.db.CreateHabit(habit)
+	suite.NoError(err)
+
+	// Try to create another reminder for the same habit
+	duplicateReminder := &db.Reminder{
+		ID:           "reminder-2",
+		HabitID:      "test-habit-1",
+		LastReminder: "2024-01-02T10:00:00Z",
+	}
+
+	err = suite.db.CreateReminder(duplicateReminder)
+	suite.Equal(db.ErrDuplicate, err)
+}
+
+func (suite *InMemoryDBTestSuite) TestGetReminder() {
+	// First create a habit
+	habit := &db.Habit{
+		ID:          "test-habit-1",
+		Name:        "Exercise",
+		Description: "Daily workout",
+		Frequency:   db.FrequencyDaily,
+		StartDate:   "2024-01-01",
+	}
+	err := suite.db.CreateHabit(habit)
+	suite.NoError(err)
+
+	// Get reminder
+	retrieved, err := suite.db.GetReminder(habit.ID)
+	suite.NoError(err)
+	suite.NotNil(retrieved)
+	suite.Equal(habit.ID+"-reminder", retrieved.ID)
+	suite.Equal(habit.ID, retrieved.HabitID)
+	suite.NotEmpty(retrieved.LastReminder)
+
+	// Verify it's a copy, not the same reference
+	suite.NotSame(habit, retrieved)
+}
+
+func (suite *InMemoryDBTestSuite) TestGetReminderNotFound() {
+	retrieved, err := suite.db.GetReminder("nonexistent-habit")
+	suite.Nil(retrieved)
+	suite.Equal(db.ErrNotFound, err)
+}
+
+func (suite *InMemoryDBTestSuite) TestUpdateReminderLastReminder() {
+	// First create a habit
+	habit := &db.Habit{
+		ID:          "test-habit-1",
+		Name:        "Exercise",
+		Description: "Daily workout",
+		Frequency:   db.FrequencyDaily,
+		StartDate:   "2024-01-01",
+	}
+	err := suite.db.CreateHabit(habit)
+	suite.NoError(err)
+
+	// Update last reminder time
+	newLastReminder := "2024-01-02T10:00:00Z"
+	err = suite.db.UpdateReminderLastReminder(habit.ID, newLastReminder)
+	suite.NoError(err)
+
+	// Verify update
+	retrieved, err := suite.db.GetReminder(habit.ID)
+	suite.NoError(err)
+	suite.Equal(newLastReminder, retrieved.LastReminder)
+}
+
+func (suite *InMemoryDBTestSuite) TestUpdateReminderLastReminderNotFound() {
+	err := suite.db.UpdateReminderLastReminder("nonexistent-habit", "2024-01-01T10:00:00Z")
+	suite.Equal(db.ErrNotFound, err)
+}
+
+func (suite *InMemoryDBTestSuite) TestDeleteReminder() {
+	// First create a habit
+	habit := &db.Habit{
+		ID:          "test-habit-1",
+		Name:        "Exercise",
+		Description: "Daily workout",
+		Frequency:   db.FrequencyDaily,
+		StartDate:   "2024-01-01",
+	}
+	err := suite.db.CreateHabit(habit)
+	suite.NoError(err)
+
+	// Verify reminder exists
+	retrieved, err := suite.db.GetReminder(habit.ID)
+	suite.NoError(err)
+	suite.NotNil(retrieved)
+
+	// Delete reminder
+	err = suite.db.DeleteReminder(habit.ID)
+	suite.NoError(err)
+
+	// Verify reminder is deleted
+	retrieved, err = suite.db.GetReminder(habit.ID)
+	suite.Nil(retrieved)
+	suite.Equal(db.ErrNotFound, err)
+}
+
+func (suite *InMemoryDBTestSuite) TestDeleteReminderNotFound() {
+	err := suite.db.DeleteReminder("nonexistent-habit")
+	suite.Equal(db.ErrNotFound, err)
+}
+
+func (suite *InMemoryDBTestSuite) TestGetHabitsNeedingReminders() {
+	// Create habits with different frequencies
+	habits := []*db.Habit{
+		{
+			ID:          "habit-daily",
+			Name:        "Daily Exercise",
+			Description: "Daily workout",
+			Frequency:   db.FrequencyDaily,
+			StartDate:   "2024-01-01",
+		},
+		{
+			ID:          "habit-weekly",
+			Name:        "Weekly Reading",
+			Description: "Read a book",
+			Frequency:   db.FrequencyWeekly,
+			StartDate:   "2024-01-01",
+		},
+		{
+			ID:          "habit-hourly",
+			Name:        "Hourly Water",
+			Description: "Drink water",
+			Frequency:   db.FrequencyHourly,
+			StartDate:   "2024-01-01",
+		},
+	}
+
+	// Create habits
+	for _, habit := range habits {
+		err := suite.db.CreateHabit(habit)
+		suite.NoError(err)
+	}
+
+	// Update reminders with old timestamps to trigger reminders
+	oldTime := "2024-01-01T10:00:00Z"
+	for _, habit := range habits {
+		err := suite.db.UpdateReminderLastReminder(habit.ID, oldTime)
+		suite.NoError(err)
+	}
+
+	// Get habits needing reminders
+	needingReminders, err := suite.db.GetHabitsNeedingReminders()
+	suite.NoError(err)
+	suite.Len(needingReminders, 3) // All should need reminders due to old timestamp
+
+	// Verify all expected habits are in the result
+	habitIDs := make(map[string]bool)
+	for _, habit := range needingReminders {
+		habitIDs[habit.ID] = true
+	}
+
+	suite.True(habitIDs["habit-daily"])
+	suite.True(habitIDs["habit-weekly"])
+	suite.True(habitIDs["habit-hourly"])
+}
+
+func (suite *InMemoryDBTestSuite) TestGetHabitsNeedingRemindersNoReminders() {
+	// Create a habit but no reminder
+	habit := &db.Habit{
+		ID:          "habit-no-reminder",
+		Name:        "Exercise",
+		Description: "Daily workout",
+		Frequency:   db.FrequencyDaily,
+		StartDate:   "2024-01-01",
+	}
+
+	err := suite.db.CreateHabit(habit)
+	suite.NoError(err)
+
+	// Delete the auto-created reminder to test empty case
+	err = suite.db.DeleteReminder(habit.ID)
+	suite.NoError(err)
+
+	// Get habits needing reminders - should be empty
+	needingReminders, err := suite.db.GetHabitsNeedingReminders()
+	suite.NoError(err)
+	suite.Empty(needingReminders)
+}
+
+func (suite *InMemoryDBTestSuite) TestGetHabitsNeedingRemindersRecentReminders() {
+	// Create a habit
+	habit := &db.Habit{
+		ID:          "habit-recent",
+		Name:        "Exercise",
+		Description: "Daily workout",
+		Frequency:   db.FrequencyDaily,
+		StartDate:   "2024-01-01",
+	}
+
+	err := suite.db.CreateHabit(habit)
+	suite.NoError(err)
+
+	// Update reminder to very recent time (future)
+	futureTime := "2099-01-01T10:00:00Z"
+	err = suite.db.UpdateReminderLastReminder(habit.ID, futureTime)
+	suite.NoError(err)
+
+	// Get habits needing reminders - should be empty
+	needingReminders, err := suite.db.GetHabitsNeedingReminders()
+	suite.NoError(err)
+	suite.Empty(needingReminders)
+}
+
+func (suite *InMemoryDBTestSuite) TestGetHabitsNeedingRemindersInvalidTimestamp() {
+	// Create a habit
+	habit := &db.Habit{
+		ID:          "habit-invalid",
+		Name:        "Exercise",
+		Description: "Daily workout",
+		Frequency:   db.FrequencyDaily,
+		StartDate:   "2024-01-01",
+	}
+
+	err := suite.db.CreateHabit(habit)
+	suite.NoError(err)
+
+	// Update reminder to invalid timestamp
+	err = suite.db.UpdateReminderLastReminder(habit.ID, "invalid-timestamp")
+	suite.NoError(err)
+
+	// Get habits needing reminders - should handle invalid timestamp gracefully
+	needingReminders, err := suite.db.GetHabitsNeedingReminders()
+	suite.NoError(err)
+	// Should not include the habit with invalid timestamp
+	for _, h := range needingReminders {
+		suite.NotEqual("habit-invalid", h.ID)
+	}
+}
+
+func (suite *InMemoryDBTestSuite) TestHabitReminderIntegration() {
+	// Test that creating a habit automatically creates a reminder
+	habit := &db.Habit{
+		ID:          "test-habit-integration",
+		Name:        "Exercise",
+		Description: "Daily workout",
+		Frequency:   db.FrequencyDaily,
+		StartDate:   "2024-01-01",
+	}
+
+	err := suite.db.CreateHabit(habit)
+	suite.NoError(err)
+
+	// Verify reminder was automatically created
+	reminder, err := suite.db.GetReminder(habit.ID)
+	suite.NoError(err)
+	suite.NotNil(reminder)
+	suite.Equal(habit.ID+"-reminder", reminder.ID)
+	suite.Equal(habit.ID, reminder.HabitID)
+	suite.NotEmpty(reminder.LastReminder)
+
+	// Test that deleting a habit also deletes the reminder
+	err = suite.db.DeleteHabit(habit.ID)
+	suite.NoError(err)
+
+	// Verify reminder is also deleted
+	reminder, err = suite.db.GetReminder(habit.ID)
+	suite.Nil(reminder)
+	suite.Equal(db.ErrNotFound, err)
+}
+
 func TestInMemoryDBTestSuite(t *testing.T) {
 	suite.Run(t, new(InMemoryDBTestSuite))
 }
@@ -461,4 +758,94 @@ func TestTrackingEntryCopyIntegrity(t *testing.T) {
 	retrieved2, err := database.GetTrackingEntry("test-entry")
 	assert.NoError(t, err)
 	assert.Equal(t, "Original Note", retrieved2.Note)
+}
+
+func TestReminderCopyIntegrity(t *testing.T) {
+	database := db.NewMapDatabase()
+
+	// Create a habit first
+	habit := &db.Habit{
+		ID:          "test-habit",
+		Name:        "Exercise",
+		Description: "Daily workout",
+		Frequency:   db.FrequencyDaily,
+		StartDate:   "2024-01-01",
+	}
+	err := database.CreateHabit(habit)
+	assert.NoError(t, err)
+
+	// Get the automatically created reminder
+	retrieved, err := database.GetReminder(habit.ID)
+	assert.NoError(t, err)
+	assert.NotNil(t, retrieved)
+
+	// Store the original last reminder time
+	originalLastReminder := retrieved.LastReminder
+
+	// Modify the retrieved reminder
+	retrieved.LastReminder = "2024-01-02T10:00:00Z"
+
+	// Get the reminder again to ensure database stores copies
+	retrieved2, err := database.GetReminder(habit.ID)
+	assert.NoError(t, err)
+	assert.NotSame(t, retrieved, retrieved2)                       // Should be different objects
+	assert.Equal(t, originalLastReminder, retrieved2.LastReminder) // Should have original data
+}
+
+func TestCalculateNextReminderTime(t *testing.T) {
+	baseTime := time.Date(2024, 1, 1, 10, 0, 0, 0, time.UTC)
+
+	tests := []struct {
+		name      string
+		frequency db.Frequency
+		expected  time.Time
+	}{
+		{
+			name:      "Hourly frequency",
+			frequency: db.FrequencyHourly,
+			expected:  baseTime.Add(time.Hour),
+		},
+		{
+			name:      "Daily frequency",
+			frequency: db.FrequencyDaily,
+			expected:  baseTime.AddDate(0, 0, 1),
+		},
+		{
+			name:      "Weekly frequency",
+			frequency: db.FrequencyWeekly,
+			expected:  baseTime.AddDate(0, 0, 7),
+		},
+		{
+			name:      "Biweekly frequency",
+			frequency: db.FrequencyBiweekly,
+			expected:  baseTime.AddDate(0, 0, 14),
+		},
+		{
+			name:      "Monthly frequency",
+			frequency: db.FrequencyMonthly,
+			expected:  baseTime.AddDate(0, 1, 0),
+		},
+		{
+			name:      "Quarterly frequency",
+			frequency: db.FrequencyQuarterly,
+			expected:  baseTime.AddDate(0, 3, 0),
+		},
+		{
+			name:      "Yearly frequency",
+			frequency: db.FrequencyYearly,
+			expected:  baseTime.AddDate(1, 0, 0),
+		},
+		{
+			name:      "Invalid frequency defaults to daily",
+			frequency: db.Frequency("invalid"),
+			expected:  baseTime.AddDate(0, 0, 1),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := db.CalculateNextReminderTime(baseTime, tt.frequency)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
 }

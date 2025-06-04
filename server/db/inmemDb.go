@@ -1,14 +1,20 @@
 package db
 
+import (
+	"time"
+)
+
 type MapDatabase struct {
-	habits   map[string]*Habit
-	tracking map[string]*TrackingEntry
+	habits    map[string]*Habit
+	tracking  map[string]*TrackingEntry
+	reminders map[string]*Reminder
 }
 
 func NewMapDatabase() *MapDatabase {
 	return &MapDatabase{
-		habits:   make(map[string]*Habit),
-		tracking: make(map[string]*TrackingEntry),
+		habits:    make(map[string]*Habit),
+		tracking:  make(map[string]*TrackingEntry),
+		reminders: make(map[string]*Reminder),
 	}
 }
 
@@ -24,6 +30,15 @@ func (db *MapDatabase) CreateHabit(habit *Habit) error {
 
 	habitCopy := *habit
 	db.habits[habit.ID] = &habitCopy
+
+	// Create associated reminder
+	reminder := &Reminder{
+		ID:           habit.ID + "-reminder",
+		HabitID:      habit.ID,
+		LastReminder: time.Now().Format(time.RFC3339),
+	}
+	db.reminders[habit.ID] = reminder
+
 	return nil
 }
 
@@ -62,6 +77,7 @@ func (db *MapDatabase) DeleteHabit(id string) error {
 	}
 
 	delete(db.habits, id)
+	delete(db.reminders, id) // Also delete associated reminder
 	return nil
 }
 
@@ -102,5 +118,69 @@ func (db *MapDatabase) DeleteTrackingEntry(id string) error {
 	}
 
 	delete(db.tracking, id)
+	return nil
+}
+
+func (db *MapDatabase) CreateReminder(reminder *Reminder) error {
+	if _, exists := db.reminders[reminder.HabitID]; exists {
+		return ErrDuplicate
+	}
+
+	reminderCopy := *reminder
+	db.reminders[reminder.HabitID] = &reminderCopy
+	return nil
+}
+
+func (db *MapDatabase) GetReminder(habitID string) (*Reminder, error) {
+	reminder, exists := db.reminders[habitID]
+	if !exists {
+		return nil, ErrNotFound
+	}
+
+	reminderCopy := *reminder
+	return &reminderCopy, nil
+}
+
+func (db *MapDatabase) UpdateReminderLastReminder(habitID string, lastReminder string) error {
+	reminder, exists := db.reminders[habitID]
+	if !exists {
+		return ErrNotFound
+	}
+
+	reminder.LastReminder = lastReminder
+	return nil
+}
+
+func (db *MapDatabase) GetHabitsNeedingReminders() ([]*Habit, error) {
+	var needingReminders []*Habit
+	now := time.Now()
+
+	for habitID, reminder := range db.reminders {
+		habit, exists := db.habits[habitID]
+		if !exists {
+			continue
+		}
+
+		lastReminder, err := time.Parse(time.RFC3339, reminder.LastReminder)
+		if err != nil {
+			continue // Skip if we can't parse the time
+		}
+
+		nextReminderTime := CalculateNextReminderTime(lastReminder, habit.Frequency)
+		if now.After(nextReminderTime) {
+			habitCopy := *habit
+			needingReminders = append(needingReminders, &habitCopy)
+		}
+	}
+
+	return needingReminders, nil
+}
+
+func (db *MapDatabase) DeleteReminder(habitID string) error {
+	if _, exists := db.reminders[habitID]; !exists {
+		return ErrNotFound
+	}
+
+	delete(db.reminders, habitID)
 	return nil
 }

@@ -188,7 +188,6 @@ func TestCORSHeaders(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	// Test CORS headers on regular request
 	req := httptest.NewRequest("GET", "/test", nil)
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
@@ -205,7 +204,6 @@ func TestOPTIONSRequest(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	// Test preflight OPTIONS request
 	req := httptest.NewRequest("OPTIONS", "/test", nil)
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
