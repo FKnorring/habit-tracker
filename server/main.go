@@ -6,6 +6,7 @@ import (
 
 	"habit-tracker/server/db"
 	"habit-tracker/server/handlers"
+	"habit-tracker/server/reminder"
 	"habit-tracker/server/sockets"
 )
 
@@ -36,6 +37,11 @@ func main() {
 
 	// Start websocket message handler
 	go sockets.HandleMessages()
+
+	// Initialize and start reminder service
+	reminderService := reminder.NewReminderService(database)
+	reminderService.Start()
+	log.Println("Reminder service started")
 
 	// Create custom router for API endpoints
 	router := handlers.CreateRouter()

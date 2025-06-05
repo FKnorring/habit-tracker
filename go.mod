@@ -7,7 +7,10 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.18
 )
 
-require github.com/gorilla/websocket v1.5.3 // indirect
+require (
+	github.com/gorilla/websocket v1.5.3 // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
+)
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect

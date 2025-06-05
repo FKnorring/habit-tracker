@@ -116,3 +116,37 @@ func HandleMessages() {
 		mutex.Unlock()
 	}
 }
+
+// MessageUser sends a message to a specific user by their user ID
+func MessageUser(userID string, message []byte) error {
+	mutex.Lock()
+	defer mutex.Unlock()
+
+	// Find the connection for the given user ID
+	var targetConn *websocket.Conn
+	for conn, connUserID := range clientUserMap {
+		if connUserID == userID {
+			targetConn = conn
+			break
+		}
+	}
+
+	if targetConn == nil {
+		log.Printf("User %s not found or not connected", userID)
+		return nil // Not an error, user just isn't connected
+	}
+
+	// Send the message to the target connection
+	err := targetConn.WriteMessage(websocket.TextMessage, message)
+	if err != nil {
+		log.Printf("Error sending message to user %s: %v", userID, err)
+		// Clean up the connection if it's broken
+		targetConn.Close()
+		delete(clients, targetConn)
+		delete(clientUserMap, targetConn)
+		return err
+	}
+
+	log.Printf("Message sent to user %s: %s", userID, string(message))
+	return nil
+}

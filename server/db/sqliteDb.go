@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -379,6 +380,7 @@ func (db *SQLiteDatabase) GetHabitsNeedingReminders() ([]*Habit, error) {
 		}
 
 		nextReminderTime := CalculateNextReminderTime(lastReminder, habit.Frequency)
+		log.Println("nextReminderTime", fmt.Sprintf("%v", nextReminderTime))
 		if now.After(nextReminderTime) {
 			needingReminders = append(needingReminders, habit)
 		}
