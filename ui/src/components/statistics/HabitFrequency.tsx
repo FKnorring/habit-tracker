@@ -50,7 +50,7 @@ export function HabitFrequency({ habits }: HabitFrequencyProps) {
               cy="50%"
               innerRadius={60}
               outerRadius={100}
-              paddingAngle={5}
+              paddingAngle={1}
               dataKey="value"
             >
               {pieData.map((entry, index) => (

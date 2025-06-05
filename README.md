@@ -64,7 +64,7 @@ All database operations are defined through the `Database` interface in `models.
 The WebSocket service provides real-time communication between the server and frontend clients:
 
 - **Real-time Notifications:** Instant delivery of habit reminders and updates
-- **User Authentication:** Client authentication with user ID mapping
+- **User Mapping:** Client to user ID mapping
 - **Message Broadcasting:** Support for both broadcast and targeted user messaging
 - **Connection Management:** Automatic client lifecycle management with cleanup
 

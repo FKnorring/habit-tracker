@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
 )
 
 type DatabaseConfig struct {
@@ -30,8 +31,20 @@ func NewDatabaseFromConfig() (Database, error) {
 func parseFlags() DatabaseConfig {
 	var config DatabaseConfig
 
-	flag.StringVar(&config.Driver, "db-driver", "memory", "Database driver to use (memory, sqlite)")
-	flag.StringVar(&config.SQLitePath, "sqlite-path", "./habits.db", "Path to SQLite database file")
+	// Check for environment variables first
+	dbPath := os.Getenv("DB_PATH")
+
+	// Set defaults based on environment variables
+	defaultDriver := "memory"
+	defaultSQLitePath := "./habits.db"
+
+	if dbPath != "" {
+		defaultDriver = "sqlite"
+		defaultSQLitePath = dbPath
+	}
+
+	flag.StringVar(&config.Driver, "db-driver", defaultDriver, "Database driver to use (memory, sqlite)")
+	flag.StringVar(&config.SQLitePath, "sqlite-path", defaultSQLitePath, "Path to SQLite database file")
 
 	flag.Parse()
 
