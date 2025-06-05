@@ -27,7 +27,7 @@ export function CreateHabitDialog({ onHabitCreated, children }: CreateHabitDialo
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Form state
+  
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [frequency, setFrequency] = useState<Frequency | ''>('');
@@ -46,7 +46,7 @@ export function CreateHabitDialog({ onHabitCreated, children }: CreateHabitDialo
       
       await onHabitCreated(newHabit);
       
-      // Reset form and close dialog
+      
       resetForm();
       setIsOpen(false);
     } catch (error) {

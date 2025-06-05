@@ -89,8 +89,6 @@ func (rs *ReminderService) checkAndSendReminders() {
 		return
 	}
 
-	log.Printf("Found %d habit(s) needing reminders", len(habits))
-
 	for _, habit := range habits {
 		if err := rs.sendReminderForHabit(habit); err != nil {
 			log.Printf("Error sending reminder for habit %s (%s): %v", habit.ID, habit.Name, err)

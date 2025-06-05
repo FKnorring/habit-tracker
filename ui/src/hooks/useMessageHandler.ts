@@ -2,6 +2,7 @@ import { toast } from 'sonner';
 import { requestNotificationPermission, showBrowserNotification, getNotificationPermission } from '../lib/notifications';
 import { ReminderMessage } from '../types';
 import { useHabits } from '../components/contexts/HabitsContext';
+import { api } from '../lib/api';
 
 export const useMessageHandler = () => {
   const { addReminder } = useHabits();
@@ -24,7 +25,14 @@ export const useMessageHandler = () => {
     const { habitId, habitName, frequency } = reminderMessage.data;
     const notificationPermission = getNotificationPermission();
     
-    // Add reminder to context
+    
+    try {
+      await api.updateReminder(habitId);
+    } catch (error) {
+      console.error('Error updating reminder on server:', error);
+    }
+    
+    
     addReminder(habitId);
     
     toast(habitName, {
@@ -49,7 +57,7 @@ export const useMessageHandler = () => {
       } : undefined,
     });
 
-    // Show browser notification if permission is granted
+    
     if (notificationPermission === 'granted') {
       showBrowserNotification(habitName, frequency);
     }

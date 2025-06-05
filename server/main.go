@@ -35,15 +35,12 @@ func main() {
 	}
 	log.Println("Database connection successful")
 
-	// Start websocket message handler
 	go sockets.HandleMessages()
 
-	// Initialize and start reminder service
 	reminderService := reminder.NewReminderService(database)
 	reminderService.Start()
 	log.Println("Reminder service started")
 
-	// Create custom router for API endpoints
 	router := handlers.CreateRouter()
 
 	router.Handle("GET", "/habits", handlers.GetHabits)
@@ -55,7 +52,6 @@ func main() {
 	router.Handle("GET", "/habits/:id/tracking", handlers.GetTracking)
 	router.Handle("PATCH", "/reminders/:id", handlers.UpdateReminder)
 
-	// Create a main mux that handles both websockets and API routes
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ws", sockets.WSHandler)
 	mux.Handle("/", router)

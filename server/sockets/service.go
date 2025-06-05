@@ -20,13 +20,11 @@ var clientUserMap = make(map[*websocket.Conn]string) // Map client connections t
 var broadcast = make(chan []byte)                    // Broadcast channel
 var mutex = &sync.Mutex{}                            // Protect clients map
 
-// Message represents the structure of messages sent from the client
 type Message struct {
 	Type string      `json:"type"`
 	Data interface{} `json:"data"`
 }
 
-// AuthData represents the authentication data structure
 type AuthData struct {
 	UserID string `json:"userId"`
 }
@@ -98,11 +96,10 @@ func WSHandler(w http.ResponseWriter, r *http.Request) {
 func HandleMessages() {
 	log.Println("WebSocket message handler started")
 	for {
-		// Grab the next message from the broadcast channel
+
 		message := <-broadcast
 		log.Printf("Broadcasting message to %d clients: %s", len(clients), string(message))
 
-		// Send the message to all connected clients
 		mutex.Lock()
 		for client := range clients {
 			err := client.WriteMessage(websocket.TextMessage, message)
@@ -117,12 +114,10 @@ func HandleMessages() {
 	}
 }
 
-// MessageUser sends a message to a specific user by their user ID
 func MessageUser(userID string, message []byte) error {
 	mutex.Lock()
 	defer mutex.Unlock()
 
-	// Find the connection for the given user ID
 	var targetConn *websocket.Conn
 	for conn, connUserID := range clientUserMap {
 		if connUserID == userID {
@@ -133,14 +128,13 @@ func MessageUser(userID string, message []byte) error {
 
 	if targetConn == nil {
 		log.Printf("User %s not found or not connected", userID)
-		return nil // Not an error, user just isn't connected
+		return nil
 	}
 
-	// Send the message to the target connection
 	err := targetConn.WriteMessage(websocket.TextMessage, message)
 	if err != nil {
 		log.Printf("Error sending message to user %s: %v", userID, err)
-		// Clean up the connection if it's broken
+
 		targetConn.Close()
 		delete(clients, targetConn)
 		delete(clientUserMap, targetConn)

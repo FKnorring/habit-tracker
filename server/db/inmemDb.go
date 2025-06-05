@@ -31,7 +31,6 @@ func (db *MapDatabase) CreateHabit(habit *Habit) error {
 	habitCopy := *habit
 	db.habits[habit.ID] = &habitCopy
 
-	// Create associated reminder
 	reminder := &Reminder{
 		ID:           habit.ID + "-reminder",
 		HabitID:      habit.ID,
@@ -77,7 +76,7 @@ func (db *MapDatabase) DeleteHabit(id string) error {
 	}
 
 	delete(db.habits, id)
-	delete(db.reminders, id) // Also delete associated reminder
+	delete(db.reminders, id)
 	return nil
 }
 
@@ -163,7 +162,7 @@ func (db *MapDatabase) GetHabitsNeedingReminders() ([]*Habit, error) {
 
 		lastReminder, err := time.Parse(time.RFC3339, reminder.LastReminder)
 		if err != nil {
-			continue // Skip if we can't parse the time
+			continue
 		}
 
 		nextReminderTime := CalculateNextReminderTime(lastReminder, habit.Frequency)

@@ -85,7 +85,6 @@ func (db *SQLiteDatabase) CreateHabit(habit *Habit) error {
 	}
 	defer tx.Rollback()
 
-	// Create habit
 	habitQuery := `
 		INSERT INTO habits (id, name, description, frequency, start_date)
 		VALUES (?, ?, ?, ?, ?)
@@ -101,7 +100,6 @@ func (db *SQLiteDatabase) CreateHabit(habit *Habit) error {
 		return fmt.Errorf("failed to create habit: %w", err)
 	}
 
-	// Create associated reminder
 	reminderQuery := `
 		INSERT INTO reminders (id, habit_id, last_reminder)
 		VALUES (?, ?, ?)
@@ -376,7 +374,7 @@ func (db *SQLiteDatabase) GetHabitsNeedingReminders() ([]*Habit, error) {
 
 		lastReminder, err := time.Parse(time.RFC3339, lastReminderStr)
 		if err != nil {
-			continue // Skip if we can't parse the time
+			continue
 		}
 
 		nextReminderTime := CalculateNextReminderTime(lastReminder, habit.Frequency)

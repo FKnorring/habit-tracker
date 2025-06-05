@@ -17,7 +17,7 @@ async function handleResponse<T>(response: Response): Promise<T> {
 }
 
 export const api = {
-  // Habit operations
+  
   async getHabits(): Promise<Habit[]> {
     const response = await fetch(`${API_BASE_URL}/habits`);
     return handleResponse<Habit[]>(response);
@@ -74,5 +74,23 @@ export const api = {
       body: JSON.stringify(entry),
     });
     return handleResponse<TrackingEntry>(response);
+  },
+
+  
+  async updateReminder(habitId: string): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/reminders/${habitId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        id: habitId + "-reminder",
+        habitId: habitId,
+        lastReminder: new Date().toISOString(),
+      }),
+    });
+    if (!response.ok) {
+      throw new ApiError(`HTTP error! status: ${response.status}`, response.status);
+    }
   },
 }; 

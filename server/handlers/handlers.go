@@ -46,7 +46,6 @@ func CreateHabit(w http.ResponseWriter, r *http.Request, params map[string]strin
 		return
 	}
 
-	// Validate frequency
 	if err := db.ValidateFrequency(string(habit.Frequency)); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte("Invalid frequency: must be one of hourly, daily, weekly, biweekly, monthly, quarterly, yearly"))

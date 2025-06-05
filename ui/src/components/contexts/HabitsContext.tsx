@@ -87,7 +87,7 @@ export function HabitsProvider({ children }: HabitsProviderProps) {
     try {
       await api.deleteHabit(id);
       setHabits((prev) => prev?.filter((habit) => habit.id !== id) || []);
-      // Remove any reminder for deleted habit
+      
       setReminders((prev) => {
         const newSet = new Set(prev);
         newSet.delete(id);
@@ -132,7 +132,7 @@ export function HabitsProvider({ children }: HabitsProviderProps) {
           return habit;
         }) || []
       );
-      // Remove reminder when user tracks the habit
+      
       setReminders((prev) => {
         const newSet = new Set(prev);
         newSet.delete(habitId);
