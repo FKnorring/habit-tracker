@@ -208,3 +208,28 @@ func GetTracking(w http.ResponseWriter, r *http.Request, params map[string]strin
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(entries)
 }
+
+func UpdateReminder(w http.ResponseWriter, r *http.Request, params map[string]string) {
+	if !checkParams(w, params, []string{"id"}) {
+		return
+	}
+
+	var reminder db.Reminder
+	if err := json.NewDecoder(r.Body).Decode(&reminder); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Invalid JSON"))
+		return
+	}
+
+	reminder.ID = params["id"]
+
+	if err := Database.UpdateReminderLastReminder(reminder.HabitID, reminder.LastReminder); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Failed to update reminder"))
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(reminder)
+}

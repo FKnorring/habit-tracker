@@ -53,6 +53,7 @@ func main() {
 	router.Handle("DELETE", "/habits/:id", handlers.DeleteHabit)
 	router.Handle("POST", "/habits/:id/tracking", handlers.CreateTracking)
 	router.Handle("GET", "/habits/:id/tracking", handlers.GetTracking)
+	router.Handle("PATCH", "/reminders/:id", handlers.UpdateReminder)
 
 	// Create a main mux that handles both websockets and API routes
 	mux := http.NewServeMux()
