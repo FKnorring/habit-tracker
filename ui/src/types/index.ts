@@ -32,4 +32,23 @@ export interface CreateHabitRequest {
 
 export interface CreateTrackingRequest {
   note?: string;
+}
+
+// WebSocket message types
+export interface ReminderMessage {
+  type: "reminder";
+  data: {
+    habitId: string;
+    habitName: string;
+    description: string;
+    frequency: string;
+    timestamp: string;
+  };
+}
+
+export interface AuthMessage {
+  type: "auth";
+  data: {
+    userId: string;
+  };
 } 
