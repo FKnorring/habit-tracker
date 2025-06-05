@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useHabits } from "@/components/contexts/HabitsContext";
 import { Button } from "@/components/ui/button";
 import { Plus, Loader2 } from "lucide-react";
@@ -28,6 +29,30 @@ export function Habits() {
       await createHabit(habitData);
     } catch (error) {
       console.error('Failed to create habit:', error);
+    }
+  };
+
+  const containerVariants = {
+    hidden: {},
+    visible: {
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: {
+      opacity: 0,
+      y: 20
+    },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.5,
+        ease: "easeOut"
+      }
     }
   };
 
@@ -72,14 +97,26 @@ export function Habits() {
           </CreateHabitDialog>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {habits?.map((habit) => (
-            <HabitCard
-              key={habit.id}
-              habit={habit}
-            />
-          ))}
-        </div>
+        <motion.div 
+          className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          <AnimatePresence>
+            {habits?.map((habit) => (
+              <motion.div
+                key={habit.id}
+                variants={itemVariants}
+                layout
+              >
+                <HabitCard
+                  habit={habit}
+                />
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </motion.div>
       )}
     </div>
   );
