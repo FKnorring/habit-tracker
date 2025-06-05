@@ -204,6 +204,85 @@ func (suite *InMemoryDBTestSuite) TestUpdateHabitNotFound() {
 	suite.Equal(db.ErrNotFound, err)
 }
 
+func (suite *InMemoryDBTestSuite) TestUpdateHabitPartial() {
+	// Create a habit first
+	habit := &db.Habit{
+		ID:          "test-habit-partial",
+		Name:        "Original Name",
+		Description: "Original Description",
+		Frequency:   db.FrequencyDaily,
+		StartDate:   "2024-01-01",
+	}
+
+	err := suite.db.CreateHabit(habit)
+	suite.NoError(err)
+
+	// Test partial update with only name
+	updates := map[string]interface{}{
+		"name": "Updated Name",
+	}
+
+	updatedHabit, err := suite.db.UpdateHabitPartial("test-habit-partial", updates)
+	suite.NoError(err)
+	suite.NotNil(updatedHabit)
+
+	// Verify only name was updated
+	suite.Equal("test-habit-partial", updatedHabit.ID)
+	suite.Equal("Updated Name", updatedHabit.Name)
+	suite.Equal("Original Description", updatedHabit.Description) // Should remain unchanged
+	suite.Equal(db.FrequencyDaily, updatedHabit.Frequency)        // Should remain unchanged
+	suite.Equal("2024-01-01", updatedHabit.StartDate)             // Should remain unchanged
+
+	// Test partial update with multiple fields
+	updates2 := map[string]interface{}{
+		"description": "Updated Description",
+		"frequency":   "weekly",
+	}
+
+	updatedHabit2, err := suite.db.UpdateHabitPartial("test-habit-partial", updates2)
+	suite.NoError(err)
+	suite.NotNil(updatedHabit2)
+
+	// Verify multiple fields were updated while others remained
+	suite.Equal("test-habit-partial", updatedHabit2.ID)
+	suite.Equal("Updated Name", updatedHabit2.Name)               // Should remain from previous update
+	suite.Equal("Updated Description", updatedHabit2.Description) // Should be updated
+	suite.Equal(db.FrequencyWeekly, updatedHabit2.Frequency)      // Should be updated
+	suite.Equal("2024-01-01", updatedHabit2.StartDate)            // Should remain unchanged
+
+	// Test with invalid frequency
+	invalidUpdates := map[string]interface{}{
+		"frequency": "invalid_frequency",
+	}
+
+	_, err = suite.db.UpdateHabitPartial("test-habit-partial", invalidUpdates)
+	suite.Error(err)
+	suite.Contains(err.Error(), "invalid frequency")
+
+	// Test with empty updates
+	emptyUpdates := map[string]interface{}{}
+
+	unchangedHabit, err := suite.db.UpdateHabitPartial("test-habit-partial", emptyUpdates)
+	suite.NoError(err)
+	suite.NotNil(unchangedHabit)
+
+	// Should return the existing habit unchanged
+	suite.Equal("test-habit-partial", unchangedHabit.ID)
+	suite.Equal("Updated Name", unchangedHabit.Name)
+	suite.Equal("Updated Description", unchangedHabit.Description)
+	suite.Equal(db.FrequencyWeekly, unchangedHabit.Frequency)
+	suite.Equal("2024-01-01", unchangedHabit.StartDate)
+}
+
+func (suite *InMemoryDBTestSuite) TestUpdateHabitPartialNotFound() {
+	updates := map[string]interface{}{
+		"name": "Updated Name",
+	}
+
+	_, err := suite.db.UpdateHabitPartial("nonexistent", updates)
+	suite.Equal(db.ErrNotFound, err)
+}
+
 func (suite *InMemoryDBTestSuite) TestDeleteHabit() {
 	habit := &db.Habit{
 		ID:          "test-habit-1",

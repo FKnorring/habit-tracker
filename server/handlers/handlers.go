@@ -100,22 +100,31 @@ func UpdateHabit(w http.ResponseWriter, r *http.Request, params map[string]strin
 		return
 	}
 
-	var habit db.Habit
-	if err := json.NewDecoder(r.Body).Decode(&habit); err != nil {
+	// Parse the request body into a map to support partial updates
+	var updates map[string]interface{}
+	if err := json.NewDecoder(r.Body).Decode(&updates); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte("Invalid JSON"))
 		return
 	}
 
-	if err := db.ValidateFrequency(string(habit.Frequency)); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("Invalid frequency: must be one of hourly, daily, weekly, biweekly, monthly, quarterly, yearly"))
-		return
+	// Validate frequency if it's being updated
+	if frequency, exists := updates["frequency"]; exists {
+		if freqStr, ok := frequency.(string); ok {
+			if err := db.ValidateFrequency(freqStr); err != nil {
+				w.WriteHeader(http.StatusBadRequest)
+				w.Write([]byte("Invalid frequency: must be one of hourly, daily, weekly, biweekly, monthly, quarterly, yearly"))
+				return
+			}
+		} else {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte("Frequency must be a string"))
+			return
+		}
 	}
 
-	habit.ID = params["id"]
-
-	if err := Database.UpdateHabit(&habit); err != nil {
+	updatedHabit, err := Database.UpdateHabitPartial(params["id"], updates)
+	if err != nil {
 		if err == db.ErrNotFound {
 			w.WriteHeader(http.StatusNotFound)
 			w.Write([]byte("Habit not found"))
@@ -128,7 +137,7 @@ func UpdateHabit(w http.ResponseWriter, r *http.Request, params map[string]strin
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(habit)
+	json.NewEncoder(w).Encode(updatedHabit)
 }
 
 func DeleteHabit(w http.ResponseWriter, r *http.Request, params map[string]string) {

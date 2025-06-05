@@ -256,6 +256,104 @@ func (suite *IntegrationTestSuite) TestUpdateHabitInvalidFrequency() {
 	suite.Equal(http.StatusBadRequest, resp.StatusCode)
 }
 
+func (suite *IntegrationTestSuite) TestUpdateHabitPartial() {
+	// First create a habit
+	originalHabit := &db.Habit{
+		ID:          "test-habit-partial",
+		Name:        "Original Name",
+		Description: "Original Description",
+		Frequency:   db.FrequencyDaily,
+		StartDate:   "2024-01-01",
+	}
+	err := handlers.Database.CreateHabit(originalHabit)
+	suite.NoError(err)
+
+	// Test updating only the name field
+	updateData := map[string]interface{}{
+		"name": "Updated Name Only",
+	}
+
+	jsonData, err := json.Marshal(updateData)
+	suite.NoError(err)
+
+	req, err := http.NewRequest("PATCH", suite.server.URL+"/habits/test-habit-partial", bytes.NewBuffer(jsonData))
+	suite.NoError(err)
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	suite.NoError(err)
+	defer resp.Body.Close()
+
+	suite.Equal(http.StatusOK, resp.StatusCode)
+
+	var responseHabit db.Habit
+	err = json.NewDecoder(resp.Body).Decode(&responseHabit)
+	suite.NoError(err)
+
+	// Verify only the name was updated, other fields should remain unchanged
+	suite.Equal("test-habit-partial", responseHabit.ID)
+	suite.Equal("Updated Name Only", responseHabit.Name)
+	suite.Equal("Original Description", responseHabit.Description) // Should not change
+	suite.Equal(db.FrequencyDaily, responseHabit.Frequency)        // Should not change
+	suite.Equal("2024-01-01", responseHabit.StartDate)             // Should not change
+
+	// Test updating only the frequency field
+	updateData2 := map[string]interface{}{
+		"frequency": "weekly",
+	}
+
+	jsonData2, err := json.Marshal(updateData2)
+	suite.NoError(err)
+
+	req2, err := http.NewRequest("PATCH", suite.server.URL+"/habits/test-habit-partial", bytes.NewBuffer(jsonData2))
+	suite.NoError(err)
+	req2.Header.Set("Content-Type", "application/json")
+
+	resp2, err := client.Do(req2)
+	suite.NoError(err)
+	defer resp2.Body.Close()
+
+	suite.Equal(http.StatusOK, resp2.StatusCode)
+
+	var responseHabit2 db.Habit
+	err = json.NewDecoder(resp2.Body).Decode(&responseHabit2)
+	suite.NoError(err)
+
+	// Verify only the frequency was updated
+	suite.Equal("test-habit-partial", responseHabit2.ID)
+	suite.Equal("Updated Name Only", responseHabit2.Name)           // Should remain from previous update
+	suite.Equal("Original Description", responseHabit2.Description) // Should still not change
+	suite.Equal(db.FrequencyWeekly, responseHabit2.Frequency)       // Should be updated
+	suite.Equal("2024-01-01", responseHabit2.StartDate)             // Should still not change
+
+	// Test updating with empty body (no fields should change)
+	emptyData := map[string]interface{}{}
+	jsonData3, err := json.Marshal(emptyData)
+	suite.NoError(err)
+
+	req3, err := http.NewRequest("PATCH", suite.server.URL+"/habits/test-habit-partial", bytes.NewBuffer(jsonData3))
+	suite.NoError(err)
+	req3.Header.Set("Content-Type", "application/json")
+
+	resp3, err := client.Do(req3)
+	suite.NoError(err)
+	defer resp3.Body.Close()
+
+	suite.Equal(http.StatusOK, resp3.StatusCode)
+
+	var responseHabit3 db.Habit
+	err = json.NewDecoder(resp3.Body).Decode(&responseHabit3)
+	suite.NoError(err)
+
+	// All fields should remain the same as the previous state
+	suite.Equal("test-habit-partial", responseHabit3.ID)
+	suite.Equal("Updated Name Only", responseHabit3.Name)
+	suite.Equal("Original Description", responseHabit3.Description)
+	suite.Equal(db.FrequencyWeekly, responseHabit3.Frequency)
+	suite.Equal("2024-01-01", responseHabit3.StartDate)
+}
+
 func (suite *IntegrationTestSuite) TestDeleteHabit() {
 	// First create a habit
 	habit := &db.Habit{

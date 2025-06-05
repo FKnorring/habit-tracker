@@ -70,6 +70,48 @@ func (db *MapDatabase) UpdateHabit(habit *Habit) error {
 	return nil
 }
 
+func (db *MapDatabase) UpdateHabitPartial(id string, updates map[string]interface{}) (*Habit, error) {
+	existing, exists := db.habits[id]
+	if !exists {
+		return nil, ErrNotFound
+	}
+
+	// Create a copy of the existing habit
+	updated := *existing
+
+	// Apply updates
+	for field, value := range updates {
+		switch field {
+		case "name":
+			if name, ok := value.(string); ok {
+				updated.Name = name
+			}
+		case "description":
+			if desc, ok := value.(string); ok {
+				updated.Description = desc
+			}
+		case "frequency":
+			if freqStr, ok := value.(string); ok {
+				if err := ValidateFrequency(freqStr); err != nil {
+					return nil, err
+				}
+				updated.Frequency = Frequency(freqStr)
+			}
+		case "startDate":
+			if startDate, ok := value.(string); ok {
+				updated.StartDate = startDate
+			}
+		}
+	}
+
+	// Store the updated habit
+	db.habits[id] = &updated
+
+	// Return a copy
+	result := updated
+	return &result, nil
+}
+
 func (db *MapDatabase) DeleteHabit(id string) error {
 	if _, exists := db.habits[id]; !exists {
 		return ErrNotFound

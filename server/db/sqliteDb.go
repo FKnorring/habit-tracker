@@ -186,6 +186,77 @@ func (db *SQLiteDatabase) UpdateHabit(habit *Habit) error {
 	return nil
 }
 
+func (db *SQLiteDatabase) UpdateHabitPartial(id string, updates map[string]interface{}) (*Habit, error) {
+	// First check if habit exists
+	existing, err := db.GetHabit(id)
+	if err != nil {
+		return nil, err
+	}
+
+	// Build dynamic update query
+	setParts := []string{}
+	args := []interface{}{}
+
+	// Map JSON field names to database column names
+	fieldMap := map[string]string{
+		"name":        "name",
+		"description": "description",
+		"frequency":   "frequency",
+		"startDate":   "start_date",
+	}
+
+	for jsonField, value := range updates {
+		if dbField, ok := fieldMap[jsonField]; ok {
+			// Validate frequency if it's being updated
+			if jsonField == "frequency" {
+				if freqStr, ok := value.(string); ok {
+					if err := ValidateFrequency(freqStr); err != nil {
+						return nil, err
+					}
+				}
+			}
+			setParts = append(setParts, dbField+" = ?")
+			args = append(args, value)
+		}
+	}
+
+	if len(setParts) == 0 {
+		// No valid fields to update, return existing habit
+		return existing, nil
+	}
+
+	// Add the ID parameter for the WHERE clause
+	args = append(args, id)
+
+	// Build the query by joining the SET parts
+	setClause := ""
+	for i, part := range setParts {
+		if i > 0 {
+			setClause += ", "
+		}
+		setClause += part
+	}
+
+	query := fmt.Sprintf("UPDATE habits SET %s WHERE id = ?", setClause)
+
+	result, err := db.db.Exec(query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update habit: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get rows affected: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		return nil, ErrNotFound
+	}
+
+	// Return the updated habit
+	return db.GetHabit(id)
+}
+
 func (db *SQLiteDatabase) DeleteHabit(id string) error {
 	query := `DELETE FROM habits WHERE id = ?`
 

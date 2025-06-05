@@ -118,6 +118,7 @@ type Database interface {
 	GetHabit(id string) (*Habit, error)
 	GetAllHabits() ([]*Habit, error)
 	UpdateHabit(habit *Habit) error
+	UpdateHabitPartial(id string, updates map[string]interface{}) (*Habit, error)
 	DeleteHabit(id string) error
 
 	CreateTrackingEntry(entry *TrackingEntry) error

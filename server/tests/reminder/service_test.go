@@ -42,6 +42,11 @@ func (m *MockDatabase) UpdateHabit(habit *db.Habit) error {
 	return args.Error(0)
 }
 
+func (m *MockDatabase) UpdateHabitPartial(id string, updates map[string]interface{}) (*db.Habit, error) {
+	args := m.Called(id, updates)
+	return args.Get(0).(*db.Habit), args.Error(1)
+}
+
 func (m *MockDatabase) DeleteHabit(id string) error {
 	args := m.Called(id)
 	return args.Error(0)
