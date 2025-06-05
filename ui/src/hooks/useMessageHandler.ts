@@ -1,11 +1,11 @@
 import { toast } from 'sonner';
 import { requestNotificationPermission, showBrowserNotification, getNotificationPermission } from '../lib/notifications';
 import { ReminderMessage } from '../types';
-import { useHabits } from '../components/contexts/HabitsContext';
+import { useReminders } from '../components/contexts/RemindersContext';
 import { api } from '../lib/api';
 
 export const useMessageHandler = () => {
-  const { addReminder } = useHabits();
+  const { addReminder } = useReminders();
 
   const handleMessage = async (event: MessageEvent) => {
     console.log('message', event.data);

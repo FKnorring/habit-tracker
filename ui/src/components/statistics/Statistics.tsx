@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useHabits } from '@/components/contexts/HabitsContext';
+import { useStatistics } from '@/components/contexts/StatisticsContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { StatCards } from './StatCards';
@@ -11,6 +12,7 @@ import { HabitCompletion } from './HabitCompletion';
 import { IndividualStatistics } from './IndividualStatistics';
 
 export function Statistics() {
+  const { habits } = useHabits();
   const {
     overallStats,
     habitCompletionRates,
@@ -18,8 +20,7 @@ export function Statistics() {
     statisticsLoading,
     statisticsError,
     fetchAllStatistics,
-    habits
-  } = useHabits();
+  } = useStatistics();
 
   const [timeRange, setTimeRange] = useState<number>(30);
 

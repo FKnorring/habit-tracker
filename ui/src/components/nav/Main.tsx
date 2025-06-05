@@ -16,13 +16,13 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { useNavigation } from "@/components/contexts/NavigationContext";
-import { useHabits } from "@/components/contexts/HabitsContext";
+import { useReminders } from "@/components/contexts/RemindersContext";
 import { CreateHabitDialog } from "@/components/habits/CreateHabitDialog";
 import { cn } from "@/lib/utils";
 
 export function NavMain() {
   const { activeItem, setActiveItem } = useNavigation();
-  const { reminders } = useHabits();
+  const { reminders } = useReminders();
 
   return (
     <SidebarGroup>

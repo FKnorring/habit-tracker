@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useHabits, EnrichedHabit } from "@/components/contexts/HabitsContext";
+import { useReminders } from "@/components/contexts/RemindersContext";
 import {
   Card,
   CardAction,
@@ -24,7 +25,8 @@ interface HabitCardProps {
 }
 
 export function HabitCard({ habit }: HabitCardProps) {
-  const { enrichHabitWithTracking, reminders, loading } = useHabits();
+  const { enrichHabitWithTracking, loading } = useHabits();
+  const { reminders } = useReminders();
   const hasReminder = reminders.has(habit.id);
 
   useEffect(() => {

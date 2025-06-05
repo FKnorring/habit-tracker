@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip } from '@/components/ui/chart';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { XAxis, YAxis, CartesianGrid, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { useHabits } from '@/components/contexts/HabitsContext';
+import { useStatistics } from '@/components/contexts/StatisticsContext';
 import { HabitStats, ProgressPoint } from '@/types';
 import { TrendingUp, Calendar, Target, Flame, RotateCcw, Activity } from 'lucide-react';
 
@@ -17,14 +17,14 @@ interface HabitStatsCardProps {
 }
 
 export function HabitStatsCard({ habitId, days = 30 }: HabitStatsCardProps) {
-  const { fetchHabitStats, fetchHabitProgress } = useHabits();
+  const { fetchHabitStats, fetchHabitProgress } = useStatistics();
   const [stats, setStats] = useState<HabitStats | null>(null);
   const [progress, setProgress] = useState<ProgressPoint[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [customDays, setCustomDays] = useState<number>(days);
 
-  const loadData = async (dayRange: number = customDays) => {
+  const loadData = useCallback(async (dayRange: number = customDays) => {
     try {
       setLoading(true);
       setError(null);
@@ -39,11 +39,11 @@ export function HabitStatsCard({ habitId, days = 30 }: HabitStatsCardProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [habitId, customDays, fetchHabitStats, fetchHabitProgress]);
 
   useEffect(() => {
     loadData(days);
-  }, [habitId, days, fetchHabitStats, fetchHabitProgress]);
+  }, [habitId, days, loadData]);
 
   const handleDaysChange = (newDays: number) => {
     setCustomDays(newDays);
