@@ -30,7 +30,7 @@ export function EditHabitDialog({ habit, children }: EditHabitDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editName, setEditName] = useState(habit.name);
   const [editDescription, setEditDescription] = useState(habit.description);
-  const [editFrequency, setEditFrequency] = useState<Frequency>(habit.frequency);
+  const [editFrequency, setEditFrequency] = useState<Frequency>(habit.frequency as Frequency);
 
   const handleEdit = async () => {
     if (isSubmitting) return;
@@ -54,7 +54,7 @@ export function EditHabitDialog({ habit, children }: EditHabitDialogProps) {
     if (open) {
       setEditName(habit.name);
       setEditDescription(habit.description);
-      setEditFrequency(habit.frequency);
+      setEditFrequency(habit.frequency as Frequency);
     }
     setIsEditDialogOpen(open);
   };
