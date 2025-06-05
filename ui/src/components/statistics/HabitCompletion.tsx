@@ -107,13 +107,13 @@ export function HabitCompletion({ habitCompletionRates, timeRange }: HabitComple
             />
             <Bar 
               dataKey="expected" 
-              fill="hsl(var(--chart-2))" 
+              fill="var(--chart-2)" 
               name="Expected"
               opacity={0.7}
             />
             <Bar 
               dataKey="actual" 
-              fill="hsl(var(--chart-1))" 
+              fill="var(--chart-1)" 
               name="Actual"
             />
           </BarChart>

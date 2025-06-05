@@ -13,13 +13,6 @@ interface HabitFrequencyProps {
 }
 
 export function HabitFrequency({ habits }: HabitFrequencyProps) {
-  const chartConfig = {
-    frequency: {
-      label: "Frequency",
-      color: "var(--chart-1)",
-    },
-  };
-
   // Prepare data for habit frequency pie chart
   const frequencyData = habits?.reduce((acc, habit) => {
     const freq = habit.frequency;
@@ -27,10 +20,20 @@ export function HabitFrequency({ habits }: HabitFrequencyProps) {
     return acc;
   }, {} as Record<string, number>);
 
+  // Get unique frequencies and create chart config
+  const frequencies = Object.keys(frequencyData || {});
+  const chartConfig = frequencies.reduce((config, frequency, index) => {
+    config[frequency] = {
+      label: frequency.charAt(0).toUpperCase() + frequency.slice(1),
+      color: `var(--chart-${(index % 5) + 1})`,
+    };
+    return config;
+  }, {} as Record<string, { label: string; color: string }>);
+
   const pieData = Object.entries(frequencyData || {}).map(([frequency, count]) => ({
     name: frequency.charAt(0).toUpperCase() + frequency.slice(1),
     value: count,
-    fill: `hsl(var(--chart-${(Object.keys(frequencyData || {}).indexOf(frequency) % 5) + 1}))`
+    fill: `var(--chart-${(frequencies.indexOf(frequency) % 5) + 1})`
   }));
 
   return (
