@@ -12,7 +12,7 @@ export interface Habit {
   id: string;
   name: string;
   description: string;
-  frequency: Frequency;
+  frequency: 'hourly' | 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'yearly';
   startDate: string;
 }
 
@@ -26,12 +26,13 @@ export interface TrackingEntry {
 export interface CreateHabitRequest {
   name: string;
   description: string;
-  frequency: Frequency;
+  frequency: Habit['frequency'];
   startDate: string;
 }
 
 export interface CreateTrackingRequest {
   note?: string;
+  timestamp?: string;
 }
 
 // WebSocket message types
@@ -51,4 +52,45 @@ export interface AuthMessage {
   data: {
     userId: string;
   };
+}
+
+// Statistics Types
+export interface HabitStats {
+  habitId: string;
+  habitName: string;
+  frequency: Habit['frequency'];
+  startDate: string;
+  totalEntries: number;
+  currentStreak: number;
+  longestStreak: number;
+  completionRate: number;
+  lastCompleted: string;
+}
+
+export interface ProgressPoint {
+  date: string;
+  count: number;
+}
+
+export interface OverallStats {
+  totalHabits: number;
+  totalEntries: number;
+  entriesToday: number;
+  entriesThisWeek: number;
+  avgEntriesPerDay: number;
+}
+
+export interface HabitCompletionRate {
+  habitId: string;
+  habitName: string;
+  frequency: Habit['frequency'];
+  startDate: string;
+  actualCompletions: number;
+  expectedCompletions: number;
+  completionRate: number;
+}
+
+export interface DailyCompletion {
+  date: string;
+  completions: number;
 } 

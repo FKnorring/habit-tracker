@@ -183,3 +183,123 @@ func (db *MapDatabase) DeleteReminder(habitID string) error {
 	delete(db.reminders, habitID)
 	return nil
 }
+
+// Statistics and Analytics Methods for MapDatabase
+
+func (db *MapDatabase) GetHabitStats(habitID string) (*HabitStats, error) {
+	habit, err := db.GetHabit(habitID)
+	if err != nil {
+		return nil, err
+	}
+
+	stats := &HabitStats{
+		HabitID:   habitID,
+		HabitName: habit.Name,
+		Frequency: habit.Frequency,
+		StartDate: habit.StartDate,
+	}
+
+	// Count total entries for this habit
+	totalEntries := 0
+	var lastCompleted string
+	for _, entry := range db.tracking {
+		if entry.HabitID == habitID {
+			totalEntries++
+			if entry.Timestamp > lastCompleted {
+				lastCompleted = entry.Timestamp
+			}
+		}
+	}
+
+	stats.TotalEntries = totalEntries
+	stats.LastCompleted = lastCompleted
+
+	// For simplicity in in-memory implementation, set basic values
+	stats.CurrentStreak = 0    // Would need more complex logic
+	stats.LongestStreak = 0    // Would need more complex logic
+	stats.CompletionRate = 0.0 // Would need more complex logic
+
+	return stats, nil
+}
+
+func (db *MapDatabase) GetHabitProgress(habitID string, days int) ([]*ProgressPoint, error) {
+	// Simple implementation - in a real scenario would need date parsing and filtering
+	progress := []*ProgressPoint{}
+
+	dateCount := make(map[string]int)
+	for _, entry := range db.tracking {
+		if entry.HabitID == habitID {
+			// Extract date part from timestamp (simplified)
+			date := entry.Timestamp[:10] // Assumes RFC3339 format
+			dateCount[date]++
+		}
+	}
+
+	for date, count := range dateCount {
+		progress = append(progress, &ProgressPoint{
+			Date:  date,
+			Count: count,
+		})
+	}
+
+	return progress, nil
+}
+
+func (db *MapDatabase) GetOverallStats() (*OverallStats, error) {
+	stats := &OverallStats{
+		TotalHabits:      len(db.habits),
+		TotalEntries:     len(db.tracking),
+		EntriesToday:     0,   // Would need date filtering
+		EntriesThisWeek:  0,   // Would need date filtering
+		AvgEntriesPerDay: 0.0, // Would need date calculations
+	}
+
+	return stats, nil
+}
+
+func (db *MapDatabase) GetHabitCompletionRates(days int) ([]*HabitCompletionRate, error) {
+	var rates []*HabitCompletionRate
+
+	for _, habit := range db.habits {
+		rate := &HabitCompletionRate{
+			HabitID:             habit.ID,
+			HabitName:           habit.Name,
+			Frequency:           habit.Frequency,
+			StartDate:           habit.StartDate,
+			ActualCompletions:   0,
+			ExpectedCompletions: 0,
+			CompletionRate:      0.0,
+		}
+
+		// Count actual completions for this habit
+		for _, entry := range db.tracking {
+			if entry.HabitID == habit.ID {
+				rate.ActualCompletions++
+			}
+		}
+
+		rates = append(rates, rate)
+	}
+
+	return rates, nil
+}
+
+func (db *MapDatabase) GetDailyCompletions(days int) ([]*DailyCompletion, error) {
+	dateCount := make(map[string]int)
+
+	for _, entry := range db.tracking {
+		// Extract date part from timestamp (simplified)
+		date := entry.Timestamp[:10] // Assumes RFC3339 format
+		dateCount[date]++
+	}
+
+	var completions []*DailyCompletion
+	for date, count := range dateCount {
+		completions = append(completions, &DailyCompletion{
+			Date:        date,
+			Completions: count,
+		})
+	}
+
+	return completions, nil
+}

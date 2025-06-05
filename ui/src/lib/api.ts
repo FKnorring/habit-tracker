@@ -1,4 +1,4 @@
-import { Habit, TrackingEntry, CreateHabitRequest, CreateTrackingRequest } from '@/types';
+import { Habit, TrackingEntry, CreateHabitRequest, CreateTrackingRequest, HabitStats, ProgressPoint, OverallStats, HabitCompletionRate, DailyCompletion } from '@/types';
 
 const API_BASE_URL = 'http://localhost:8080';
 
@@ -92,5 +92,31 @@ export const api = {
     if (!response.ok) {
       throw new ApiError(`HTTP error! status: ${response.status}`, response.status);
     }
+  },
+
+  // Statistics endpoints
+  async getHabitStats(habitId: string): Promise<HabitStats> {
+    const response = await fetch(`${API_BASE_URL}/habits/${habitId}/stats`);
+    return handleResponse<HabitStats>(response);
+  },
+
+  async getHabitProgress(habitId: string, days: number = 30): Promise<ProgressPoint[]> {
+    const response = await fetch(`${API_BASE_URL}/habits/${habitId}/progress?days=${days}`);
+    return handleResponse<ProgressPoint[]>(response);
+  },
+
+  async getOverallStats(): Promise<OverallStats> {
+    const response = await fetch(`${API_BASE_URL}/stats/overview`);
+    return handleResponse<OverallStats>(response);
+  },
+
+  async getHabitCompletionRates(days: number = 30): Promise<HabitCompletionRate[]> {
+    const response = await fetch(`${API_BASE_URL}/stats/completion-rates?days=${days}`);
+    return handleResponse<HabitCompletionRate[]>(response);
+  },
+
+  async getDailyCompletions(days: number = 30): Promise<DailyCompletion[]> {
+    const response = await fetch(`${API_BASE_URL}/stats/daily-completions?days=${days}`);
+    return handleResponse<DailyCompletion[]>(response);
   },
 }; 

@@ -410,3 +410,336 @@ func (db *SQLiteDatabase) DeleteReminder(habitID string) error {
 
 	return nil
 }
+
+// Statistics and Analytics Methods
+
+func (db *SQLiteDatabase) GetHabitStats(habitID string) (*HabitStats, error) {
+	// Get basic habit info
+	habit, err := db.GetHabit(habitID)
+	if err != nil {
+		return nil, err
+	}
+
+	stats := &HabitStats{
+		HabitID:   habitID,
+		HabitName: habit.Name,
+		Frequency: habit.Frequency,
+		StartDate: habit.StartDate,
+	}
+
+	// Get total entries count
+	countQuery := `SELECT COUNT(*) FROM tracking_entries WHERE habit_id = ?`
+	err = db.db.QueryRow(countQuery, habitID).Scan(&stats.TotalEntries)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get total entries: %w", err)
+	}
+
+	// Get current streak
+	stats.CurrentStreak = db.calculateCurrentStreak(habitID, habit.Frequency)
+
+	// Get longest streak
+	stats.LongestStreak = db.calculateLongestStreak(habitID, habit.Frequency)
+
+	// Get completion rate
+	stats.CompletionRate = db.calculateCompletionRate(habitID, habit.Frequency, habit.StartDate)
+
+	// Get last completed date
+	lastQuery := `SELECT MAX(timestamp) FROM tracking_entries WHERE habit_id = ?`
+	var lastCompleted sql.NullString
+	err = db.db.QueryRow(lastQuery, habitID).Scan(&lastCompleted)
+	if err == nil && lastCompleted.Valid {
+		stats.LastCompleted = lastCompleted.String
+	}
+
+	return stats, nil
+}
+
+func (db *SQLiteDatabase) GetHabitProgress(habitID string, days int) ([]*ProgressPoint, error) {
+	startDate := time.Now().AddDate(0, 0, -days).Format("2006-01-02")
+
+	query := `
+		SELECT DATE(timestamp) as date, COUNT(*) as count
+		FROM tracking_entries 
+		WHERE habit_id = ? AND DATE(timestamp) >= ?
+		GROUP BY DATE(timestamp)
+		ORDER BY DATE(timestamp)
+	`
+
+	rows, err := db.db.Query(query, habitID, startDate)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query progress: %w", err)
+	}
+	defer rows.Close()
+
+	var progress []*ProgressPoint
+	for rows.Next() {
+		point := &ProgressPoint{}
+		err := rows.Scan(&point.Date, &point.Count)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan progress point: %w", err)
+		}
+		progress = append(progress, point)
+	}
+
+	return progress, nil
+}
+
+func (db *SQLiteDatabase) GetOverallStats() (*OverallStats, error) {
+	stats := &OverallStats{}
+
+	// Total habits
+	habitsQuery := `SELECT COUNT(*) FROM habits`
+	err := db.db.QueryRow(habitsQuery).Scan(&stats.TotalHabits)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get total habits: %w", err)
+	}
+
+	// Total entries
+	entriesQuery := `SELECT COUNT(*) FROM tracking_entries`
+	err = db.db.QueryRow(entriesQuery).Scan(&stats.TotalEntries)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get total entries: %w", err)
+	}
+
+	// Entries today
+	todayQuery := `SELECT COUNT(*) FROM tracking_entries WHERE DATE(timestamp) = DATE('now')`
+	err = db.db.QueryRow(todayQuery).Scan(&stats.EntriesToday)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get today's entries: %w", err)
+	}
+
+	// Entries this week
+	weekQuery := `
+		SELECT COUNT(*) FROM tracking_entries 
+		WHERE DATE(timestamp) >= DATE('now', '-6 days')
+	`
+	err = db.db.QueryRow(weekQuery).Scan(&stats.EntriesThisWeek)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get this week's entries: %w", err)
+	}
+
+	// Average entries per day (last 30 days)
+	avgQuery := `
+		SELECT CAST(COUNT(*) AS FLOAT) / 30 FROM tracking_entries 
+		WHERE DATE(timestamp) >= DATE('now', '-30 days')
+	`
+	err = db.db.QueryRow(avgQuery).Scan(&stats.AvgEntriesPerDay)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get average entries: %w", err)
+	}
+
+	return stats, nil
+}
+
+func (db *SQLiteDatabase) GetHabitCompletionRates(days int) ([]*HabitCompletionRate, error) {
+	startDate := time.Now().AddDate(0, 0, -days).Format("2006-01-02")
+
+	query := `
+		SELECT h.id, h.name, h.frequency, h.start_date,
+			   COUNT(te.id) as actual_completions
+		FROM habits h
+		LEFT JOIN tracking_entries te ON h.id = te.habit_id 
+			AND DATE(te.timestamp) >= ?
+		GROUP BY h.id, h.name, h.frequency, h.start_date
+		ORDER BY h.name
+	`
+
+	rows, err := db.db.Query(query, startDate)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query completion rates: %w", err)
+	}
+	defer rows.Close()
+
+	var rates []*HabitCompletionRate
+	for rows.Next() {
+		rate := &HabitCompletionRate{}
+		var frequencyStr string
+		err := rows.Scan(&rate.HabitID, &rate.HabitName, &frequencyStr, &rate.StartDate, &rate.ActualCompletions)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan completion rate: %w", err)
+		}
+
+		rate.Frequency = Frequency(frequencyStr)
+		rate.ExpectedCompletions = db.calculateExpectedCompletions(Frequency(frequencyStr), days)
+
+		if rate.ExpectedCompletions > 0 {
+			rate.CompletionRate = float64(rate.ActualCompletions) / float64(rate.ExpectedCompletions)
+		}
+
+		rates = append(rates, rate)
+	}
+
+	return rates, nil
+}
+
+func (db *SQLiteDatabase) GetDailyCompletions(days int) ([]*DailyCompletion, error) {
+	startDate := time.Now().AddDate(0, 0, -days).Format("2006-01-02")
+
+	query := `
+		SELECT DATE(timestamp) as date, COUNT(*) as completions
+		FROM tracking_entries 
+		WHERE DATE(timestamp) >= ?
+		GROUP BY DATE(timestamp)
+		ORDER BY DATE(timestamp)
+	`
+
+	rows, err := db.db.Query(query, startDate)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query daily completions: %w", err)
+	}
+	defer rows.Close()
+
+	var completions []*DailyCompletion
+	for rows.Next() {
+		completion := &DailyCompletion{}
+		err := rows.Scan(&completion.Date, &completion.Completions)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan daily completion: %w", err)
+		}
+		completions = append(completions, completion)
+	}
+
+	return completions, nil
+}
+
+// Helper methods for calculations
+
+func (db *SQLiteDatabase) calculateCurrentStreak(habitID string, frequency Frequency) int {
+	// Implementation depends on frequency - for now, let's do daily streaks
+	query := `
+		SELECT DATE(timestamp) FROM tracking_entries 
+		WHERE habit_id = ? 
+		ORDER BY timestamp DESC
+	`
+
+	rows, err := db.db.Query(query, habitID)
+	if err != nil {
+		return 0
+	}
+	defer rows.Close()
+
+	var dates []string
+	for rows.Next() {
+		var date string
+		if err := rows.Scan(&date); err == nil {
+			dates = append(dates, date)
+		}
+	}
+
+	if len(dates) == 0 {
+		return 0
+	}
+
+	// Remove duplicates and sort
+	uniqueDates := make(map[string]bool)
+	for _, date := range dates {
+		uniqueDates[date] = true
+	}
+
+	today := time.Now().Format("2006-01-02")
+	currentDate, _ := time.Parse("2006-01-02", today)
+	streak := 0
+
+	for {
+		dateStr := currentDate.Format("2006-01-02")
+		if uniqueDates[dateStr] {
+			streak++
+			currentDate = currentDate.AddDate(0, 0, -1)
+		} else {
+			break
+		}
+	}
+
+	return streak
+}
+
+func (db *SQLiteDatabase) calculateLongestStreak(habitID string, frequency Frequency) int {
+	// Simplified implementation - can be enhanced based on frequency
+	query := `
+		SELECT DISTINCT DATE(timestamp) FROM tracking_entries 
+		WHERE habit_id = ? 
+		ORDER BY DATE(timestamp)
+	`
+
+	rows, err := db.db.Query(query, habitID)
+	if err != nil {
+		return 0
+	}
+	defer rows.Close()
+
+	var dates []time.Time
+	for rows.Next() {
+		var dateStr string
+		if err := rows.Scan(&dateStr); err == nil {
+			if date, err := time.Parse("2006-01-02", dateStr); err == nil {
+				dates = append(dates, date)
+			}
+		}
+	}
+
+	if len(dates) == 0 {
+		return 0
+	}
+
+	maxStreak := 1
+	currentStreak := 1
+
+	for i := 1; i < len(dates); i++ {
+		if dates[i].Sub(dates[i-1]).Hours() == 24 {
+			currentStreak++
+			if currentStreak > maxStreak {
+				maxStreak = currentStreak
+			}
+		} else {
+			currentStreak = 1
+		}
+	}
+
+	return maxStreak
+}
+
+func (db *SQLiteDatabase) calculateCompletionRate(habitID string, frequency Frequency, startDate string) float64 {
+	start, err := time.Parse("2006-01-02", startDate[:10])
+	if err != nil {
+		return 0.0
+	}
+
+	daysSinceStart := int(time.Since(start).Hours() / 24)
+	if daysSinceStart <= 0 {
+		return 0.0
+	}
+
+	query := `SELECT COUNT(*) FROM tracking_entries WHERE habit_id = ?`
+	var actualCompletions int
+	if err := db.db.QueryRow(query, habitID).Scan(&actualCompletions); err != nil {
+		return 0.0
+	}
+
+	expectedCompletions := db.calculateExpectedCompletions(frequency, daysSinceStart)
+	if expectedCompletions == 0 {
+		return 0.0
+	}
+
+	return float64(actualCompletions) / float64(expectedCompletions)
+}
+
+func (db *SQLiteDatabase) calculateExpectedCompletions(frequency Frequency, days int) int {
+	switch frequency {
+	case FrequencyDaily:
+		return days
+	case FrequencyWeekly:
+		return days / 7
+	case FrequencyBiweekly:
+		return days / 14
+	case FrequencyMonthly:
+		return days / 30
+	case FrequencyQuarterly:
+		return days / 90
+	case FrequencyYearly:
+		return days / 365
+	case FrequencyHourly:
+		return days * 24 // Assuming once per hour per day
+	default:
+		return days // Default to daily
+	}
+}

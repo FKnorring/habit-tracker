@@ -92,6 +92,32 @@ func (m *MockDatabase) DeleteReminder(habitID string) error {
 	return args.Error(0)
 }
 
+// Statistics and Analytics Methods
+func (m *MockDatabase) GetHabitStats(habitID string) (*db.HabitStats, error) {
+	args := m.Called(habitID)
+	return args.Get(0).(*db.HabitStats), args.Error(1)
+}
+
+func (m *MockDatabase) GetHabitProgress(habitID string, days int) ([]*db.ProgressPoint, error) {
+	args := m.Called(habitID, days)
+	return args.Get(0).([]*db.ProgressPoint), args.Error(1)
+}
+
+func (m *MockDatabase) GetOverallStats() (*db.OverallStats, error) {
+	args := m.Called()
+	return args.Get(0).(*db.OverallStats), args.Error(1)
+}
+
+func (m *MockDatabase) GetHabitCompletionRates(days int) ([]*db.HabitCompletionRate, error) {
+	args := m.Called(days)
+	return args.Get(0).([]*db.HabitCompletionRate), args.Error(1)
+}
+
+func (m *MockDatabase) GetDailyCompletions(days int) ([]*db.DailyCompletion, error) {
+	args := m.Called(days)
+	return args.Get(0).([]*db.DailyCompletion), args.Error(1)
+}
+
 func TestNewReminderService(t *testing.T) {
 	mockDB := &MockDatabase{}
 	service := reminder.NewReminderService(mockDB)

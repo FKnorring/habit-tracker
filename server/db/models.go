@@ -69,6 +69,48 @@ type Reminder struct {
 	LastReminder string `json:"lastReminder"`
 }
 
+// Statistics and Analytics Structures
+
+type HabitStats struct {
+	HabitID        string    `json:"habitId"`
+	HabitName      string    `json:"habitName"`
+	Frequency      Frequency `json:"frequency"`
+	StartDate      string    `json:"startDate"`
+	TotalEntries   int       `json:"totalEntries"`
+	CurrentStreak  int       `json:"currentStreak"`
+	LongestStreak  int       `json:"longestStreak"`
+	CompletionRate float64   `json:"completionRate"`
+	LastCompleted  string    `json:"lastCompleted"`
+}
+
+type ProgressPoint struct {
+	Date  string `json:"date"`
+	Count int    `json:"count"`
+}
+
+type OverallStats struct {
+	TotalHabits      int     `json:"totalHabits"`
+	TotalEntries     int     `json:"totalEntries"`
+	EntriesToday     int     `json:"entriesToday"`
+	EntriesThisWeek  int     `json:"entriesThisWeek"`
+	AvgEntriesPerDay float64 `json:"avgEntriesPerDay"`
+}
+
+type HabitCompletionRate struct {
+	HabitID             string    `json:"habitId"`
+	HabitName           string    `json:"habitName"`
+	Frequency           Frequency `json:"frequency"`
+	StartDate           string    `json:"startDate"`
+	ActualCompletions   int       `json:"actualCompletions"`
+	ExpectedCompletions int       `json:"expectedCompletions"`
+	CompletionRate      float64   `json:"completionRate"`
+}
+
+type DailyCompletion struct {
+	Date        string `json:"date"`
+	Completions int    `json:"completions"`
+}
+
 type Database interface {
 	Ping() error
 
@@ -88,4 +130,11 @@ type Database interface {
 	UpdateReminderLastReminder(habitID string, lastReminder string) error
 	GetHabitsNeedingReminders() ([]*Habit, error)
 	DeleteReminder(habitID string) error
+
+	// Statistics and Analytics Methods
+	GetHabitStats(habitID string) (*HabitStats, error)
+	GetHabitProgress(habitID string, days int) ([]*ProgressPoint, error)
+	GetOverallStats() (*OverallStats, error)
+	GetHabitCompletionRates(days int) ([]*HabitCompletionRate, error)
+	GetDailyCompletions(days int) ([]*DailyCompletion, error)
 }

@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"time"
 
 	"habit-tracker/server/db"
@@ -237,4 +238,120 @@ func UpdateReminder(w http.ResponseWriter, r *http.Request, params map[string]st
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(reminder)
+}
+
+// Statistics and Analytics Handlers
+
+func GetHabitStats(w http.ResponseWriter, r *http.Request, params map[string]string) {
+	if !checkParams(w, params, []string{"id"}) {
+		return
+	}
+
+	stats, err := Database.GetHabitStats(params["id"])
+	if err != nil {
+		if err == db.ErrNotFound {
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte("Habit not found"))
+		} else {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte("Failed to retrieve habit statistics"))
+		}
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(stats)
+}
+
+func GetHabitProgress(w http.ResponseWriter, r *http.Request, params map[string]string) {
+	if !checkParams(w, params, []string{"id"}) {
+		return
+	}
+
+	// Default to 30 days, allow override via query parameter
+	days := 30
+	if daysParam := r.URL.Query().Get("days"); daysParam != "" {
+		if d, err := strconv.Atoi(daysParam); err == nil && d > 0 {
+			days = d
+		}
+	}
+
+	progress, err := Database.GetHabitProgress(params["id"], days)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Failed to retrieve habit progress"))
+		return
+	}
+
+	if progress == nil {
+		progress = []*db.ProgressPoint{}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(progress)
+}
+
+func GetOverallStats(w http.ResponseWriter, r *http.Request, params map[string]string) {
+	stats, err := Database.GetOverallStats()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Failed to retrieve overall statistics"))
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(stats)
+}
+
+func GetHabitCompletionRates(w http.ResponseWriter, r *http.Request, params map[string]string) {
+	// Default to 30 days, allow override via query parameter
+	days := 30
+	if daysParam := r.URL.Query().Get("days"); daysParam != "" {
+		if d, err := strconv.Atoi(daysParam); err == nil && d > 0 {
+			days = d
+		}
+	}
+
+	rates, err := Database.GetHabitCompletionRates(days)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Failed to retrieve completion rates"))
+		return
+	}
+
+	if rates == nil {
+		rates = []*db.HabitCompletionRate{}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(rates)
+}
+
+func GetDailyCompletions(w http.ResponseWriter, r *http.Request, params map[string]string) {
+	// Default to 30 days, allow override via query parameter
+	days := 30
+	if daysParam := r.URL.Query().Get("days"); daysParam != "" {
+		if d, err := strconv.Atoi(daysParam); err == nil && d > 0 {
+			days = d
+		}
+	}
+
+	completions, err := Database.GetDailyCompletions(days)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Failed to retrieve daily completions"))
+		return
+	}
+
+	if completions == nil {
+		completions = []*db.DailyCompletion{}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(completions)
 }
