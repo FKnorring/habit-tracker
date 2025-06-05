@@ -14,12 +14,16 @@ interface HabitsContextType {
   loading: boolean;
   error: string | null;
   initialized: boolean;
+  reminders: Set<string>;
   fetchHabits: () => Promise<void>;
   createHabit: (habit: Parameters<typeof api.createHabit>[0]) => Promise<Habit>;
   updateHabit: (id: string, habit: Parameters<typeof api.updateHabit>[1]) => Promise<void>;
   deleteHabit: (id: string) => Promise<void>;
   enrichHabitWithTracking: (habitId: string) => Promise<void>;
   addTrackingEntry: (habitId: string, entry: Parameters<typeof api.createTrackingEntry>[1]) => Promise<void>;
+  addReminder: (habitId: string) => void;
+  removeReminder: (habitId: string) => void;
+  clearAllReminders: () => void;
 }
 
 const HabitsContext = createContext<HabitsContextType | undefined>(undefined);
@@ -33,6 +37,7 @@ export function HabitsProvider({ children }: HabitsProviderProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
+  const [reminders, setReminders] = useState<Set<string>>(new Set());
 
   const fetchHabits = useCallback(async () => {
     try {
@@ -82,6 +87,12 @@ export function HabitsProvider({ children }: HabitsProviderProps) {
     try {
       await api.deleteHabit(id);
       setHabits((prev) => prev?.filter((habit) => habit.id !== id) || []);
+      // Remove any reminder for deleted habit
+      setReminders((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(id);
+        return newSet;
+      });
       toast.success("Habit deleted successfully");
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to delete habit";
@@ -121,6 +132,12 @@ export function HabitsProvider({ children }: HabitsProviderProps) {
           return habit;
         }) || []
       );
+      // Remove reminder when user tracks the habit
+      setReminders((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(habitId);
+        return newSet;
+      });
       toast.success("Progress tracked successfully");
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to track progress";
@@ -129,17 +146,37 @@ export function HabitsProvider({ children }: HabitsProviderProps) {
     }
   }, []);
 
+  const addReminder = useCallback((habitId: string) => {
+    setReminders((prev) => new Set([...prev, habitId]));
+  }, []);
+
+  const removeReminder = useCallback((habitId: string) => {
+    setReminders((prev) => {
+      const newSet = new Set(prev);
+      newSet.delete(habitId);
+      return newSet;
+    });
+  }, []);
+
+  const clearAllReminders = useCallback(() => {
+    setReminders(new Set());
+  }, []);
+
   const value: HabitsContextType = {
     habits,
     loading,
     error,
     initialized,
+    reminders,
     fetchHabits,
     createHabit,
     updateHabit,
     deleteHabit,
     enrichHabitWithTracking,
     addTrackingEntry,
+    addReminder,
+    removeReminder,
+    clearAllReminders,
   };
 
   return (

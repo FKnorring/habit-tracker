@@ -33,7 +33,7 @@ const (
 	// Default user ID until proper user management is implemented
 	DefaultUserID = "user-123"
 
-	DefaultCheckInterval = 5 * time.Minute
+	DefaultCheckInterval = 30 * time.Second
 )
 
 func NewReminderService(database db.Database) *ReminderService {

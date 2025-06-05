@@ -1,37 +1,55 @@
-"use client"
+"use client";
 
-import { IconChartBar, IconCirclePlusFilled, IconCoffee } from "@tabler/icons-react"
+import {
+  IconChartBar,
+  IconCirclePlusFilled,
+  IconCoffee,
+} from "@tabler/icons-react";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
-import { useNavigation } from "@/components/contexts/NavigationContext"
+} from "@/components/ui/sidebar";
+import { useNavigation } from "@/components/contexts/NavigationContext";
+import { useHabits } from "@/components/contexts/HabitsContext";
+import { cn } from "@/lib/utils";
 
 export function NavMain() {
-  const { activeItem, setActiveItem } = useNavigation()
+  const { activeItem, setActiveItem } = useNavigation();
+  const { reminders } = useHabits();
 
   return (
     <SidebarGroup>
       <SidebarGroupContent className="flex flex-col gap-2">
         <SidebarMenu>
           <SidebarMenuItem className="flex items-center gap-2">
-            <SidebarMenuButton
-              tooltip="Habits"
-              onClick={() => setActiveItem('habits')}
-              className={
-                activeItem === 'habits'
-                  ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground min-w-8 duration-200 ease-linear"
-                  : "min-w-8 duration-200 ease-linear"
-              }
-            >
-              <IconCoffee />
-              <span>Habits</span>
-            </SidebarMenuButton>
+            <div className="relative flex items-center w-full">
+              <SidebarMenuButton
+                tooltip="Habits"
+                onClick={() => setActiveItem("habits")}
+                className={cn(
+                  "min-w-8 duration-200 ease-linear flex-1",
+                  activeItem === "habits" &&
+                    "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground"
+                )}
+              >
+                <IconCoffee />
+                <span>Habits</span>
+              </SidebarMenuButton>
+              {reminders.size > 0 && (
+                <Badge
+                  variant="destructive"
+                  className="absolute -top-2 -right-2 h-5 w-5 p-0 text-xs flex items-center justify-center min-w-5 z-50"
+                >
+                  {reminders.size}
+                </Badge>
+              )}
+            </div>
             <Button
               size="icon"
               className="size-8 group-data-[collapsible=icon]:opacity-0"
@@ -44,9 +62,9 @@ export function NavMain() {
           <SidebarMenuItem className="flex items-center gap-2">
             <SidebarMenuButton
               tooltip="Statistics"
-              onClick={() => setActiveItem('statistics')}
+              onClick={() => setActiveItem("statistics")}
               className={
-                activeItem === 'statistics'
+                activeItem === "statistics"
                   ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground min-w-8 duration-200 ease-linear"
                   : "min-w-8 duration-200 ease-linear"
               }
@@ -55,9 +73,8 @@ export function NavMain() {
               <span>Statistics</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
-         
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>
-  )
+  );
 }

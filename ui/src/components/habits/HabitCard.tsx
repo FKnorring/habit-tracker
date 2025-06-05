@@ -24,16 +24,22 @@ interface HabitCardProps {
 }
 
 export function HabitCard({ habit }: HabitCardProps) {
-  const { enrichHabitWithTracking } = useHabits();
+  const { enrichHabitWithTracking, reminders, loading } = useHabits();
+  const hasReminder = reminders.has(habit.id);
 
   useEffect(() => {
-    if (!habit.trackingEntries) {
+    if (!habit.trackingEntries && !loading) {
       enrichHabitWithTracking(habit.id);
     }
-  }, [habit.id, habit.trackingEntries, enrichHabitWithTracking]);
+  }, [habit.id, habit.trackingEntries, enrichHabitWithTracking, loading]);
 
   return (
-    <Card className="@container/card">
+    <Card className={`@container/card relative ${hasReminder ? 'ring-2 ring-destructive/20' : ''}`}>
+      {hasReminder && (
+        <div className="absolute -top-2 -right-1 z-10">
+          <Badge variant="destructive" className="h-3 w-3 p-0 rounded-full animate-pulse shadow-lg" />
+        </div>
+      )}
       <CardHeader>
         <CardDescription>
           Times tracked:{" "}

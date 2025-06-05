@@ -1,8 +1,11 @@
 import { toast } from 'sonner';
 import { requestNotificationPermission, showBrowserNotification, getNotificationPermission } from '../lib/notifications';
 import { ReminderMessage } from '../types';
+import { useHabits } from '../components/contexts/HabitsContext';
 
 export const useMessageHandler = () => {
+  const { addReminder } = useHabits();
+
   const handleMessage = async (event: MessageEvent) => {
     console.log('message', event.data);
     
@@ -18,8 +21,11 @@ export const useMessageHandler = () => {
   };
 
   const handleReminderMessage = async (reminderMessage: ReminderMessage) => {
-    const { habitName, frequency } = reminderMessage.data;
+    const { habitId, habitName, frequency } = reminderMessage.data;
     const notificationPermission = getNotificationPermission();
+    
+    // Add reminder to context
+    addReminder(habitId);
     
     toast(habitName, {
       description: `It's time to track this habit - should be tracked ${frequency}`,
