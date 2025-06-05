@@ -183,6 +183,12 @@ func CreateTracking(w http.ResponseWriter, r *http.Request, params map[string]st
 		return
 	}
 
+	if err := Database.UpdateReminderLastReminder(entry.HabitID, entry.Timestamp); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Failed to update reminder"))
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(entry)
