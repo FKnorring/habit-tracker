@@ -7,9 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useHabits } from '@/components/contexts/HabitsContext';
 
 interface CreateHabitDialogProps {
-  onHabitCreated: (habitData: CreateHabitRequest) => void | Promise<void>;
   children?: React.ReactNode;
 }
 
@@ -23,7 +23,8 @@ const frequencyOptions = [
   { value: Frequency.YEARLY, label: 'Yearly' },
 ];
 
-export function CreateHabitDialog({ onHabitCreated, children }: CreateHabitDialogProps) {
+export function CreateHabitDialog({ children }: CreateHabitDialogProps) {
+  const { createHabit } = useHabits();
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -44,7 +45,7 @@ export function CreateHabitDialog({ onHabitCreated, children }: CreateHabitDialo
         startDate: new Date().toISOString(),
       };
       
-      await onHabitCreated(newHabit);
+      await createHabit(newHabit);
       
       
       resetForm();

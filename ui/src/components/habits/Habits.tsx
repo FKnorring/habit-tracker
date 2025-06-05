@@ -14,8 +14,7 @@ export function Habits() {
     loading, 
     error, 
     initialized,
-    fetchHabits, 
-    createHabit 
+    fetchHabits
   } = useHabits();
 
   useEffect(() => {
@@ -23,14 +22,6 @@ export function Habits() {
       fetchHabits();
     }
   }, [initialized, fetchHabits]);
-
-  const handleHabitCreated = async (habitData: Parameters<typeof createHabit>[0]) => {
-    try {
-      await createHabit(habitData);
-    } catch (error) {
-      console.error('Failed to create habit:', error);
-    }
-  };
 
   const containerVariants = {
     hidden: {},
@@ -59,7 +50,7 @@ export function Habits() {
   return (
     <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6 px-4 md:px-6">
       <div className="flex items-center justify-between">
-        <CreateHabitDialog onHabitCreated={handleHabitCreated}>
+        <CreateHabitDialog>
           <Button>
             <Plus className="h-4 w-4" />
             New Habit
@@ -89,7 +80,7 @@ export function Habits() {
           <p className="text-muted-foreground mb-4">
             Get started by creating your first habit to track!
           </p>
-          <CreateHabitDialog onHabitCreated={handleHabitCreated}>
+          <CreateHabitDialog>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
               Create Your First Habit

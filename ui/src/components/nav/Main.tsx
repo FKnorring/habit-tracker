@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useNavigation } from "@/components/contexts/NavigationContext";
 import { useHabits } from "@/components/contexts/HabitsContext";
+import { CreateHabitDialog } from "@/components/habits/CreateHabitDialog";
 import { cn } from "@/lib/utils";
 
 export function NavMain() {
@@ -50,14 +51,16 @@ export function NavMain() {
                 </Badge>
               )}
             </div>
-            <Button
-              size="icon"
-              className="size-8 group-data-[collapsible=icon]:opacity-0"
-              variant="outline"
-            >
-              <IconCirclePlusFilled />
-              <span className="sr-only">Quick Create</span>
-            </Button>
+            <CreateHabitDialog>
+              <Button
+                size="icon"
+                className="size-8 group-data-[collapsible=icon]:opacity-0"
+                variant="outline"
+              >
+                <IconCirclePlusFilled />
+                <span className="sr-only">Quick Create</span>
+              </Button>
+            </CreateHabitDialog>
           </SidebarMenuItem>
           <SidebarMenuItem className="flex items-center gap-2">
             <SidebarMenuButton
