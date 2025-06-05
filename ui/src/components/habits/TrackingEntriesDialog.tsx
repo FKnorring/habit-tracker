@@ -1,12 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useHabits, EnrichedHabit } from '@/components/contexts/HabitsContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { IconPlus } from '@tabler/icons-react';
+import { EnrichedHabit } from '@/components/contexts/HabitsContext';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 interface TrackingEntriesDialogProps {
   habit: EnrichedHabit;
@@ -14,35 +10,10 @@ interface TrackingEntriesDialogProps {
 }
 
 export function TrackingEntriesDialog({ habit, children }: TrackingEntriesDialogProps) {
-  const { addTrackingEntry } = useHabits();
   const [isOpen, setIsOpen] = useState(false);
-  const [isAddingEntry, setIsAddingEntry] = useState(false);
-  const [newEntryNote, setNewEntryNote] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleAddEntry = async () => {
-    if (isSubmitting) return;
-    
-    setIsSubmitting(true);
-    try {
-      await addTrackingEntry(habit.id, { 
-        note: newEntryNote || undefined 
-      });
-      setNewEntryNote('');
-      setIsAddingEntry(false);
-    } catch (error) {
-      console.error('Error tracking habit:', error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const handleDialogOpenChange = (open: boolean) => {
     setIsOpen(open);
-    if (!open) {
-      setIsAddingEntry(false);
-      setNewEntryNote('');
-    }
   };
 
   const trackingEntries = habit.trackingEntries || [];
@@ -57,50 +28,9 @@ export function TrackingEntriesDialog({ habit, children }: TrackingEntriesDialog
       <DialogContent className="max-w-2xl max-h-[90vh]">
         <DialogHeader>
           <DialogTitle>Tracking History - {habit.name}</DialogTitle>
-          <DialogDescription>
-            View all tracking entries and add new ones
-          </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-4">
-          {/* Add New Entry Section */}
-          <div className="border-b pb-4">
-            {!isAddingEntry ? (
-              <Button 
-                onClick={() => setIsAddingEntry(true)}
-                className="w-full"
-              >
-                <IconPlus className="w-4 h-4 mr-2" />
-                Add New Entry
-              </Button>
-            ) : (
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="new-entry-note">Note (optional)</Label>
-                  <Input
-                    id="new-entry-note"
-                    placeholder="How did it go today?"
-                    value={newEntryNote}
-                    onChange={(e) => setNewEntryNote(e.target.value)}
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <Button onClick={handleAddEntry} disabled={isSubmitting}>
-                    {isSubmitting ? 'Adding...' : 'Add Entry'}
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    onClick={() => {
-                      setIsAddingEntry(false);
-                      setNewEntryNote('');
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
 
           {/* Entries List */}
           <div className="space-y-2">
