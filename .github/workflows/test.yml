@@ -51,17 +51,25 @@ jobs:
           exit 1
         fi
     
-    - name: Run Unit Tests
+    - name: Run All Main Test Suites
       working-directory: ./server
-      run: make test-unit
+      run: make test
     
-    - name: Run Router Tests  
+    - name: Run Database Driver Tests
       working-directory: ./server
-      run: make test-router
+      run: make test-inmem
     
-    - name: Run Integration Tests
+    - name: Run Auth Core Tests
       working-directory: ./server
-      run: make test-integration
+      run: make test-auth-core
+    
+    - name: Run Auth Middleware Tests
+      working-directory: ./server
+      run: make test-auth-middleware
+    
+    - name: Run Auth Handler Tests
+      working-directory: ./server
+      run: make test-auth-handlers
     
     - name: Run All Tests with Coverage
       working-directory: ./server
