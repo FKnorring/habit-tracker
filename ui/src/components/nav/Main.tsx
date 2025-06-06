@@ -59,7 +59,7 @@ export function NavMain() {
             </div>
             <TooltipProvider>
               <Tooltip>
-                <TooltipTrigger>
+                <TooltipTrigger asChild>
                   <CreateHabitDialog>
                     <Button
                       size="icon"

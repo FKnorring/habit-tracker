@@ -3,6 +3,7 @@
 import { createContext, ReactNode, useContext, useEffect } from 'react';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 import { useMessageHandler } from '../../hooks/useMessageHandler';
+import { useAuth } from './AuthContext';
 
 interface SocketContextType {
   sendJsonMessage: ReturnType<typeof useWebSocket>['sendJsonMessage'];
@@ -15,20 +16,21 @@ const socketUrl = 'ws://localhost:8080/ws';
 
 export function SocketProvider({ children }: { children: ReactNode }) {
   const { handleMessage } = useMessageHandler();
+  const { user } = useAuth();
 
   const {
     sendJsonMessage,
     readyState,
   } = useWebSocket(socketUrl, {
     onMessage: handleMessage,
-  });
+  }, !!user);
 
   useEffect(() => {
     if (readyState === ReadyState.OPEN) {
       sendJsonMessage({
         type: "auth",
         data: {
-          userId: "user-123",
+          userId: user?.id,
         },
       });
     }

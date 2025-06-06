@@ -3,6 +3,7 @@ package db
 import (
 	"errors"
 	"fmt"
+	"time"
 )
 
 var (
@@ -111,6 +112,16 @@ type DailyCompletion struct {
 	Completions int    `json:"completions"`
 }
 
+// User represents a user in the system
+type User struct {
+	ID           string    `json:"id"`
+	Email        string    `json:"email"`
+	Username     string    `json:"username"`
+	PasswordHash string    `json:"-"` // "-" excludes this field from JSON serialization
+	CreatedAt    time.Time `json:"createdAt"`
+	UpdatedAt    time.Time `json:"updatedAt"`
+}
+
 type Database interface {
 	Ping() error
 
@@ -138,4 +149,11 @@ type Database interface {
 	GetOverallStats() (*OverallStats, error)
 	GetHabitCompletionRates(days int) ([]*HabitCompletionRate, error)
 	GetDailyCompletions(days int) ([]*DailyCompletion, error)
+
+	// User Management Methods
+	CreateUser(user *User) error
+	GetUserByEmail(email string) (*User, error)
+	GetUserByID(id string) (*User, error)
+	UpdateUser(user *User) error
+	DeleteUser(id string) error
 }

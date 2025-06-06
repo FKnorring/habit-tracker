@@ -2,11 +2,11 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { AppSidebar } from "@/components/AppSidebar";
 import { SidebarInset } from "@/components/ui/sidebar";
 import { MainContent } from "@/components/MainContent";
-import { AppProviders } from "@/components/contexts/AppProviders";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 export default function Page() {
   return (
-    <AppProviders>
+    <ProtectedRoute>
       <AppSidebar variant="inset" />
       <SidebarInset>
         <SiteHeader />
@@ -16,6 +16,6 @@ export default function Page() {
           </div>
         </div>
       </SidebarInset>
-    </AppProviders>
+    </ProtectedRoute>
   );
 }

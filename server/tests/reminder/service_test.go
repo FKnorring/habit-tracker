@@ -123,6 +123,32 @@ func (m *MockDatabase) GetDailyCompletions(days int) ([]*db.DailyCompletion, err
 	return args.Get(0).([]*db.DailyCompletion), args.Error(1)
 }
 
+// User Management Methods
+func (m *MockDatabase) CreateUser(user *db.User) error {
+	args := m.Called(user)
+	return args.Error(0)
+}
+
+func (m *MockDatabase) GetUserByEmail(email string) (*db.User, error) {
+	args := m.Called(email)
+	return args.Get(0).(*db.User), args.Error(1)
+}
+
+func (m *MockDatabase) GetUserByID(id string) (*db.User, error) {
+	args := m.Called(id)
+	return args.Get(0).(*db.User), args.Error(1)
+}
+
+func (m *MockDatabase) UpdateUser(user *db.User) error {
+	args := m.Called(user)
+	return args.Error(0)
+}
+
+func (m *MockDatabase) DeleteUser(id string) error {
+	args := m.Called(id)
+	return args.Error(0)
+}
+
 func TestNewReminderService(t *testing.T) {
 	mockDB := &MockDatabase{}
 	service := reminder.NewReminderService(mockDB)

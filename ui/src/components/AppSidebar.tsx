@@ -39,11 +39,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavMain />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={{
-          name: "John Doe",
-          email: "john.doe@example.com",
-          avatar: "https://github.com/shadcn.png",
-        }} />
+        <NavUser />
       </SidebarFooter>
     </Sidebar>
   )

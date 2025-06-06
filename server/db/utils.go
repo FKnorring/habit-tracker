@@ -3,6 +3,8 @@ package db
 import (
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 func CalculateNextReminderTime(lastReminder time.Time, frequency Frequency) time.Time {
@@ -26,6 +28,24 @@ func CalculateNextReminderTime(lastReminder time.Time, frequency Frequency) time
 	}
 }
 
-func ContainsString(s, substr string) bool {
-	return strings.Contains(s, substr)
+func ContainsString(str, substr string) bool {
+	return strings.Contains(strings.ToLower(str), strings.ToLower(substr))
+}
+
+// ParseCSV parses a comma-separated string into a slice
+func ParseCSV(csv string) []string {
+	if csv == "" {
+		return []string{}
+	}
+	parts := strings.Split(csv, ",")
+	result := make([]string, len(parts))
+	for i, part := range parts {
+		result[i] = strings.TrimSpace(part)
+	}
+	return result
+}
+
+// generateUUID generates a new UUID string
+func generateUUID() string {
+	return uuid.New().String()
 }

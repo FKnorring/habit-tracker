@@ -3,7 +3,6 @@ package db
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -30,6 +29,17 @@ func NewSQLiteDatabase(dbPath string) (*SQLiteDatabase, error) {
 }
 
 func (db *SQLiteDatabase) createTables() error {
+	createUsersTable := `
+		CREATE TABLE IF NOT EXISTS users (
+			id TEXT PRIMARY KEY,
+			email TEXT UNIQUE NOT NULL,
+			username TEXT UNIQUE NOT NULL,
+			password_hash TEXT NOT NULL,
+			created_at TEXT NOT NULL,
+			updated_at TEXT NOT NULL
+		);
+	`
+
 	createHabitsTable := `
 		CREATE TABLE IF NOT EXISTS habits (
 			id TEXT PRIMARY KEY,
@@ -58,6 +68,10 @@ func (db *SQLiteDatabase) createTables() error {
 			FOREIGN KEY (habit_id) REFERENCES habits(id) ON DELETE CASCADE
 		);
 	`
+
+	if _, err := db.db.Exec(createUsersTable); err != nil {
+		return fmt.Errorf("failed to create users table: %w", err)
+	}
 
 	if _, err := db.db.Exec(createHabitsTable); err != nil {
 		return fmt.Errorf("failed to create habits table: %w", err)
@@ -449,7 +463,6 @@ func (db *SQLiteDatabase) GetHabitsNeedingReminders() ([]*Habit, error) {
 		}
 
 		nextReminderTime := CalculateNextReminderTime(lastReminder, habit.Frequency)
-		log.Println("nextReminderTime", fmt.Sprintf("%v", nextReminderTime))
 		if now.After(nextReminderTime) {
 			needingReminders = append(needingReminders, habit)
 		}
@@ -813,4 +826,137 @@ func (db *SQLiteDatabase) calculateExpectedCompletions(frequency Frequency, days
 	default:
 		return days // Default to daily
 	}
+}
+
+// User Management Methods
+
+func (db *SQLiteDatabase) CreateUser(user *User) error {
+	// Generate UUID for user if not provided
+	if user.ID == "" {
+		user.ID = generateUUID()
+	}
+
+	query := `
+		INSERT INTO users (id, email, username, password_hash, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?)
+	`
+
+	_, err := db.db.Exec(query, user.ID, user.Email, user.Username, user.PasswordHash,
+		user.CreatedAt.Format(time.RFC3339), user.UpdatedAt.Format(time.RFC3339))
+	if err != nil {
+		if sqliteError, ok := err.(interface{ Error() string }); ok {
+			errorMsg := sqliteError.Error()
+			if ContainsString(errorMsg, "UNIQUE constraint failed") {
+				if ContainsString(errorMsg, "email") {
+					return fmt.Errorf("email already exists")
+				}
+				if ContainsString(errorMsg, "username") {
+					return fmt.Errorf("username already exists")
+				}
+				return ErrDuplicate
+			}
+		}
+		return fmt.Errorf("failed to create user: %w", err)
+	}
+
+	return nil
+}
+
+func (db *SQLiteDatabase) GetUserByEmail(email string) (*User, error) {
+	query := `SELECT id, email, username, password_hash, created_at, updated_at FROM users WHERE email = ?`
+
+	user := &User{}
+	var createdAtStr, updatedAtStr string
+	err := db.db.QueryRow(query, email).Scan(
+		&user.ID, &user.Email, &user.Username, &user.PasswordHash, &createdAtStr, &updatedAtStr,
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, ErrNotFound
+		}
+		return nil, fmt.Errorf("failed to get user by email: %w", err)
+	}
+
+	// Parse timestamps
+	if user.CreatedAt, err = time.Parse(time.RFC3339, createdAtStr); err != nil {
+		return nil, fmt.Errorf("failed to parse created_at: %w", err)
+	}
+	if user.UpdatedAt, err = time.Parse(time.RFC3339, updatedAtStr); err != nil {
+		return nil, fmt.Errorf("failed to parse updated_at: %w", err)
+	}
+
+	return user, nil
+}
+
+func (db *SQLiteDatabase) GetUserByID(id string) (*User, error) {
+	query := `SELECT id, email, username, password_hash, created_at, updated_at FROM users WHERE id = ?`
+
+	user := &User{}
+	var createdAtStr, updatedAtStr string
+	err := db.db.QueryRow(query, id).Scan(
+		&user.ID, &user.Email, &user.Username, &user.PasswordHash, &createdAtStr, &updatedAtStr,
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, ErrNotFound
+		}
+		return nil, fmt.Errorf("failed to get user by ID: %w", err)
+	}
+
+	// Parse timestamps
+	if user.CreatedAt, err = time.Parse(time.RFC3339, createdAtStr); err != nil {
+		return nil, fmt.Errorf("failed to parse created_at: %w", err)
+	}
+	if user.UpdatedAt, err = time.Parse(time.RFC3339, updatedAtStr); err != nil {
+		return nil, fmt.Errorf("failed to parse updated_at: %w", err)
+	}
+
+	return user, nil
+}
+
+func (db *SQLiteDatabase) UpdateUser(user *User) error {
+	user.UpdatedAt = time.Now()
+
+	query := `
+		UPDATE users 
+		SET email = ?, username = ?, password_hash = ?, updated_at = ?
+		WHERE id = ?
+	`
+
+	result, err := db.db.Exec(query, user.Email, user.Username, user.PasswordHash,
+		user.UpdatedAt.Format(time.RFC3339), user.ID)
+	if err != nil {
+		return fmt.Errorf("failed to update user: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		return ErrNotFound
+	}
+
+	return nil
+}
+
+func (db *SQLiteDatabase) DeleteUser(id string) error {
+	result, err := db.db.Exec("DELETE FROM users WHERE id = ?", id)
+	if err != nil {
+		return fmt.Errorf("failed to delete user: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		return ErrNotFound
+	}
+
+	return nil
 }

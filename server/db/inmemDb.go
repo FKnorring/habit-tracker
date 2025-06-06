@@ -8,6 +8,7 @@ type MapDatabase struct {
 	habits    map[string]*Habit
 	tracking  map[string]*TrackingEntry
 	reminders map[string]*Reminder
+	users     map[string]*User
 }
 
 func NewMapDatabase() *MapDatabase {
@@ -15,6 +16,7 @@ func NewMapDatabase() *MapDatabase {
 		habits:    make(map[string]*Habit),
 		tracking:  make(map[string]*TrackingEntry),
 		reminders: make(map[string]*Reminder),
+		users:     make(map[string]*User),
 	}
 }
 
@@ -344,4 +346,68 @@ func (db *MapDatabase) GetDailyCompletions(days int) ([]*DailyCompletion, error)
 	}
 
 	return completions, nil
+}
+
+// User Management Methods for MapDatabase
+
+func (db *MapDatabase) CreateUser(user *User) error {
+	// Generate UUID for user if not provided
+	if user.ID == "" {
+		user.ID = generateUUID()
+	}
+
+	// Check if email already exists
+	for _, existingUser := range db.users {
+		if existingUser.Email == user.Email {
+			return ErrDuplicate
+		}
+		if existingUser.Username == user.Username {
+			return ErrDuplicate
+		}
+	}
+
+	// Create a copy to store
+	userCopy := *user
+	db.users[user.ID] = &userCopy
+	return nil
+}
+
+func (db *MapDatabase) GetUserByEmail(email string) (*User, error) {
+	for _, user := range db.users {
+		if user.Email == email {
+			userCopy := *user
+			return &userCopy, nil
+		}
+	}
+	return nil, ErrNotFound
+}
+
+func (db *MapDatabase) GetUserByID(id string) (*User, error) {
+	user, exists := db.users[id]
+	if !exists {
+		return nil, ErrNotFound
+	}
+
+	userCopy := *user
+	return &userCopy, nil
+}
+
+func (db *MapDatabase) UpdateUser(user *User) error {
+	if _, exists := db.users[user.ID]; !exists {
+		return ErrNotFound
+	}
+
+	// Create a copy to store
+	userCopy := *user
+	db.users[user.ID] = &userCopy
+	return nil
+}
+
+func (db *MapDatabase) DeleteUser(id string) error {
+	if _, exists := db.users[id]; !exists {
+		return ErrNotFound
+	}
+
+	delete(db.users, id)
+	return nil
 }
